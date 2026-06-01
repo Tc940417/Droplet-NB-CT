@@ -1,0 +1,210 @@
+ctrl_h3k4me3_PA_G_Tn5_rep1
+ctrl_h3k4me3_PA_G_Tn5_rep2
+ctrl_h3k4me3_Nano_Tn5_rep1
+ctrl_h3k4me3_Nano_Tn5_rep2
+ctrl_h3k4me3_Nano_Tn5_Beads_rep1
+ctrl_h3k4me3_Nano_Tn5_Beads_rep2
+ctrl_h3k27ac_Nano_Tn5_Beads_rep1
+ctrl_h3k27ac_Nano_Tn5_Beads_rep2
+heat_h3k4me3_Nano_Tn5_Beads_rep1
+heat_h3k4me3_Nano_Tn5_Beads_rep2
+heat_h3k27ac_Nano_Tn5_Beads_rep1
+heat_h3k27ac_Nano_Tn5_Beads_rep2
+
+
+
+
+
+macs3 callpeak -t ~/result/sn_CT/Os/C4_snCT_3/output/alignment.fragments.sorted.bam -f BAM -g 373245519 --broad --broadcutoff 0.2 --nomodel --extsize 147 --call-summits --outdir ./broadCT3_peaks_result
+macs3 callpeak -t ~/result/sn_CT/Os/C4_snCT_4/output/alignment.fragments.sorted.bam -f BAM -g 373245519 --broad --broadcutoff 0.2 --nomodel --extsize 147 --call-summits --outdir ./broadCT4_peaks_result
+macs3 callpeak -t ~/result/sn_CT/Os/C4_snCT_5/output/alignment.fragments.sorted.bam -f BAM -g 373245519 --broad --broadcutoff 0.2 --nomodel --extsize 147 --call-summits --outdir ./broadCT5_peaks_result
+macs3 callpeak -t ~/result/sn_CT/Os/C4_snCT_6/output/alignment.fragments.sorted.bam -f BAM -g 373245519 --broad --broadcutoff 0.2 --nomodel --extsize 147 --call-summits --outdir ./broadCT6_peaks_result
+macs3 callpeak -t ~/result/sn_CT/Os/C4_snCT_7/output/alignment.fragments.sorted.bam -f BAM -g 373245519 --broad --broadcutoff 0.2 --nomodel --extsize 147 --call-summits --outdir ./broadCT7_peaks_result
+macs3 callpeak -t ~/result/sn_CT/Os/C4_snCT_8/output/alignment.fragments.sorted.bam -f BAM -g 373245519 --broad --broadcutoff 0.2 --nomodel --extsize 147 --call-summits --outdir ./broadCT8_peaks_result
+macs3 callpeak -t ~/result/sn_CT/Os/C4_snCT_13/output/alignment.fragments.sorted.bam -f BAM -g 373245519 --broad --broadcutoff 0.2 --nomodel --extsize 147 --call-summits --outdir ./broadCT13_peaks_result
+macs3 callpeak -t ~/result/sn_CT/Os/C4_snCT_14/output/alignment.fragments.sorted.bam -f BAM -g 373245519 --broad --broadcutoff 0.2 --nomodel --extsize 147 --call-summits --outdir ./broadCT14_peaks_result
+macs3 callpeak -t ~/result/sn_CT/Os/C4_snCT_15/output/alignment.fragments.sorted.bam -f BAM -g 373245519 --broad --broadcutoff 0.2 --nomodel --extsize 147 --call-summits --outdir ./broadCT15_peaks_result
+macs3 callpeak -t ~/result/sn_CT/Os/C4_snCT_16/output/alignment.fragments.sorted.bam -f BAM -g 373245519 --broad --broadcutoff 0.2 --nomodel --extsize 147 --call-summits --outdir ./broadCT16_peaks_result
+macs3 callpeak -t ~/result/sn_CT/Os/C4_snCT_17/output/alignment.fragments.sorted.bam -f BAM -g 373245519 --broad --broadcutoff 0.2 --nomodel --extsize 147 --call-summits --outdir ./broadCT17_peaks_result
+macs3 callpeak -t ~/result/sn_CT/Os/C4_snCT_18/output/alignment.fragments.sorted.bam -f BAM -g 373245519 --broad --broadcutoff 0.2 --nomodel --extsize 147 --call-summits --outdir ./broadCT18_peaks_result
+
+
+
+/public/home/tongcheng/anaconda3/envs/scBridge/bin/multiBamSummary bins \
+    --bamfiles \
+        ~/result/sn_CT/Os/C4_snCT_3/output/alignment.fragments.sorted.bam \
+        ~/result/sn_CT/Os/C4_snCT_4/output/alignment.fragments.sorted.bam \
+        ~/result/sn_CT/Os/C4_snCT_5/output/alignment.fragments.sorted.bam \
+        ~/result/sn_CT/Os/C4_snCT_6/output/alignment.fragments.sorted.bam \
+        ~/result/sn_CT/Os/C4_snCT_7/output/alignment.fragments.sorted.bam \
+        ~/result/sn_CT/Os/C4_snCT_8/output/alignment.fragments.sorted.bam \
+        ~/result/sn_CT/Os/C4_snCT_13/output/alignment.fragments.sorted.bam \
+        ~/result/sn_CT/Os/C4_snCT_14/output/alignment.fragments.sorted.bam \
+        ~/result/sn_CT/Os/C4_snCT_15/output/alignment.fragments.sorted.bam \
+        ~/result/sn_CT/Os/C4_snCT_16/output/alignment.fragments.sorted.bam \
+        ~/result/sn_CT/Os/C4_snCT_17/output/alignment.fragments.sorted.bam \
+        ~/result/sn_CT/Os/C4_snCT_18/output/alignment.fragments.sorted.bam \
+    --numberOfProcessors 52 \
+    --binsize 1000 \
+    --minMappingQuality 30 \
+    --labels ctrl_h3k4me3_PA_G_Tn5_rep1 ctrl_h3k4me3_PA_G_Tn5_rep2 ctrl_h3k4me3_Nano_Tn5_rep1 ctrl_h3k4me3_Nano_Tn5_rep2 ctrl_h3k4me3_Nano_Tn5_Beads_rep1 ctrl_h3k4me3_Nano_Tn5_Beads_rep2 ctrl_h3k27ac_Nano_Tn5_Beads_rep1 ctrl_h3k27ac_Nano_Tn5_Beads_rep2 heat_h3k4me3_Nano_Tn5_Beads_rep1 heat_h3k4me3_Nano_Tn5_Beads_rep2 heat_h3k27ac_Nano_Tn5_Beads_rep1 heat_h3k27ac_Nano_Tn5_Beads_rep2 \ 
+    -out readCounts.npz \
+    --outRawCounts readCounts.tab
+
+
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/plotCorrelation  \
+-in H3K4me3_readCounts.npz \
+--corMethod pearson --skipZeros \
+--plotTitle "Pearson Correlation of Average Scores Per snCT" \
+--whatToPlot scatterplot \
+-o H3K4me3_PearsonCorr.png \
+--colorMap RdYlBu \
+--plotFile heatmap.pdf \
+--plotFileFormat pdf
+
+
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/result/sn_CT/Os/C4_snCT_13/output/alignment.fragments.sorted.bam \
+  -o ctrl_h3k27ac_Nano_Tn5_Beads_rep1.bw \
+  --normalizeUsing CPM \
+  --binSize 10 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/result/sn_CT/Os/C4_snCT_14/output/alignment.fragments.sorted.bam \
+  -o ctrl_h3k27ac_Nano_Tn5_Beads_rep2.bw \
+  --normalizeUsing CPM \
+  --binSize 10 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/result/sn_CT/Os/C4_snCT_15/output/alignment.fragments.sorted.bam \
+  -o heat_h3k4me3_Nano_Tn5_Beads_rep1.bw \
+  --normalizeUsing CPM \
+  --binSize 10 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/result/sn_CT/Os/C4_snCT_16/output/alignment.fragments.sorted.bam \
+  -o heat_h3k4me3_Nano_Tn5_Beads_rep2.bw \
+  --normalizeUsing CPM \
+  --binSize 10 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/result/sn_CT/Os/C4_snCT_17/output/alignment.fragments.sorted.bam \
+  -o heat_h3k27ac_Nano_Tn5_Beads_rep1.bw \
+  --normalizeUsing CPM \
+  --binSize 10 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/result/sn_CT/Os/C4_snCT_18/output/alignment.fragments.sorted.bam \
+  -o heat_h3k27ac_Nano_Tn5_Beads_rep2.bw \
+  --normalizeUsing CPM \
+  --binSize 10 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/computeMatrix scale-regions \
+	-S ctrl_h3k4me3_PA_G_Tn5_rep1.bw \
+	    ctrl_h3k4me3_PA_G_Tn5_rep2.bw \
+	    ctrl_h3k4me3_Nano_Tn5_rep1.bw \
+	    ctrl_h3k4me3_Nano_Tn5_rep2.bw \
+	    ctrl_h3k4me3_Nano_Tn5_Beads_rep1.bw \
+	    ctrl_h3k4me3_Nano_Tn5_Beads_rep2.bw \
+	    ctrl_h3k27ac_Nano_Tn5_Beads_rep1.bw \
+	    ctrl_h3k27ac_Nano_Tn5_Beads_rep2.bw \
+	    heat_h3k4me3_Nano_Tn5_Beads_rep1.bw \
+	    heat_h3k4me3_Nano_Tn5_Beads_rep2.bw \
+	    heat_h3k27ac_Nano_Tn5_Beads_rep1.bw \
+	    heat_h3k27ac_Nano_Tn5_Beads_rep2.bw \
+	-R /public/home/tongcheng/ref/sn-CT_ref/Os/Osgene.bed \
+	--beforeRegionStartLength 3000 \
+	--regionBodyLength 5000 \
+	--afterRegionStartLength 3000 \
+	-p 52 \
+	--skipZeros -o matrix.mat.gz
+
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/computeMatrix scale-regions \
+        -S  ctrl_h3k4me3_PA_G_Tn5_rep1.bw \
+            ctrl_h3k4me3_PA_G_Tn5_rep2.bw \
+            ctrl_h3k4me3_Nano_Tn5_rep1.bw \
+            ctrl_h3k4me3_Nano_Tn5_rep2.bw \
+            ctrl_h3k4me3_Nano_Tn5_Beads_rep1.bw \
+            ctrl_h3k4me3_Nano_Tn5_Beads_rep2.bw \
+            heat_h3k4me3_Nano_Tn5_Beads_rep1.bw \
+            heat_h3k4me3_Nano_Tn5_Beads_rep2.bw \
+        -R /public/home/tongcheng/ref/sn-CT_ref/Os/H3K4me3_nochr.bed \
+	--beforeRegionStartLength 3000 \
+	--regionBodyLength 5000 \
+	--afterRegionStartLength 3000 \
+	-p 52 \
+	--skipZeros -o H3K4me3_matrix.mat.gz
+
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/computeMatrix scale-regions \
+        -S  ctrl_h3k27ac_Nano_Tn5_Beads_rep1.bw \
+             ctrl_h3k27ac_Nano_Tn5_Beads_rep2.bw \
+             heat_h3k27ac_Nano_Tn5_Beads_rep1.bw \
+             heat_h3k27ac_Nano_Tn5_Beads_rep2.bw \
+        -R /public/home/tongcheng/ref/sn-CT_ref/Os/H3K27ac_nochr.bed \
+       	--beforeRegionStartLength 3000 \
+	--regionBodyLength 5000 \
+	--afterRegionStartLength 3000 \
+	--p 52 \
+	--skipZeros -o H3K27ac_matrix.mat.gz
+
+
+
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/plotHeatmap -m H3K27ac_Osgene_matrix.mat.gz \
+-out H3K27ac_allgene_Heatmap.pdf
+  
+
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/plotHeatmap -m h3k4_2_matrix.mat.gz \
+-out H3K4me3-2Heatmap.pdf 
+
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/plotFingerprint \
+	-b ~/database/bulk_CHIP/bam/SRR10751669.unique.bam \
+	    ~/database/bulk_CHIP/bam/SRR10751611.unique.bam \
+	    ~/database/bulk_CHIP/bam/SRR10751612.unique.bam \
+	    ~/database/bulk_CHIP/bam/SRR10751645.unique.bam \
+	    ~/database/bulk_CHIP/bam/SRR10751646.unique.bam \
+	    ~/result/sn_CT/Os/C4_snCT_5/output/alignment.fragments.sorted.bam \
+	    ~/result/sn_CT/Os/C4_snCT_6/output/alignment.fragments.sorted.bam \
+	    ~/result/sn_CT/Os/C4_snCT_7/output/alignment.fragments.sorted.bam \
+	    ~/result/sn_CT/Os/C4_snCT_8/output/alignment.fragments.sorted.bam \
+	--labels Bulk_input ChIP_yl_1 ChIP_yl_2 ChIP_ml_1 ChIP_ml_2 snCT_Nano-Tn5_1 snCT_Nano-Tn5_2 snCT_Nano-Tn5_Beads_1 snCT_Nano-Tn5_Beads_2 \
+	--minMappingQuality 30 --skipZeros \
+	-T "Fingerprints of different samples"  \
+	--plotFile fingerprints.pdf \
+	-p 52 \
+	--outRawCounts fingerprints.tab
+
+
+
+
+
+
+
+
+
+
