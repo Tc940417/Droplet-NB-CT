@@ -1,0 +1,60 @@
+fastp -i ./CHIP_DATA/yl_H3K4me3_1/SRR10751611_1.fastq -I ./CHIP_DATA/yl_H3K4me3_1/SRR10751611_2.fastq -o ./CHIP_DATA/yl_H3K4me3_1/SRR10751611_1.trim.fastq -O ./CHIP_DATA/yl_H3K4me3_1/SRR10751611_2.trim.fastq
+fastp -i ./CHIP_DATA/yl_H3K4me3_2/SRR10751612_1.fastq -I ./CHIP_DATA/yl_H3K4me3_2/SRR10751612_2.fastq -o ./CHIP_DATA/yl_H3K4me3_2/SRR10751612_1.trim.fastq -O ./CHIP_DATA/yl_H3K4me3_2/SRR10751612_2.trim.fastq
+fastp -i ./CHIP_DATA/yl_H3K27ac_1/SRR10751613_1.fastq -I ./CHIP_DATA/yl_H3K27ac_1/SRR10751613_2.fastq -o ./CHIP_DATA/yl_H3K27ac_1/SRR10751613_1.trim.fastq -O ./CHIP_DATA/yl_H3K27ac_1/SRR10751613_2.trim.fastq
+fastp -i ./CHIP_DATA/yl_H3K27ac_2/SRR10751614_1.fastq -I ./CHIP_DATA/yl_H3K27ac_2/SRR10751614_2.fastq -o ./CHIP_DATA/yl_H3K27ac_2/SRR10751614_1.trim.fastq -O ./CHIP_DATA/yl_H3K27ac_2/SRR10751614_2.trim.fastq
+fastp -i ./CHIP_DATA/ml_H3K4me3_1/SRR10751645_1.fastq -I ./CHIP_DATA/ml_H3K4me3_1/SRR10751645_2.fastq -o ./CHIP_DATA/ml_H3K4me3_1/SRR10751645_1.trim.fastq -O ./CHIP_DATA/ml_H3K4me3_1/SRR10751645_2.trim.fastq
+fastp -i ./CHIP_DATA/ml_H3K4me3_2/SRR10751646_1.fastq -I ./CHIP_DATA/ml_H3K4me3_2/SRR10751646_2.fastq -o ./CHIP_DATA/ml_H3K4me3_2/SRR10751646_1.trim.fastq -O ./CHIP_DATA/ml_H3K4me3_2/SRR10751646_2.trim.fastq
+fastp -i ./CHIP_DATA/ml_H3K27ac_1/SRR10751647_1.fastq -I ./CHIP_DATA/ml_H3K27ac_1/SRR10751647_2.fastq -o ./CHIP_DATA/ml_H3K27ac_1/SRR10751647_1.trim.fastq -O ./CHIP_DATA/ml_H3K27ac_1/SRR10751647_2.trim.fastq
+fastp -i ./CHIP_DATA/ml_H3K27ac_2/SRR10751648_1.fastq -I ./CHIP_DATA/ml_H3K27ac_2/SRR10751648_2.fastq -o ./CHIP_DATA/ml_H3K27ac_2/SRR10751648_1.trim.fastq -O ./CHIP_DATA/ml_H3K27ac_2/SRR10751648_2.trim.fastq
+
+
+
+./bwa mem -t 52 ~/database/bulk_CHIP/Oryza_sativa.IRGSP-1.0.dna.toplevel.fa ~/database/bulk_CHIP/SRR10751612_1.trim.fastq ~/database/bulk_CHIP/SRR10751612_2.trim.fastq > ~/database/bulk_CHIP/SRR10751612.sam
+./bwa mem -t 52 ~/database/bulk_CHIP/Oryza_sativa.IRGSP-1.0.dna.toplevel.fa ~/database/bulk_CHIP/SRR10751613_1.trim.fastq ~/database/bulk_CHIP/SRR10751613_2.trim.fastq > ~/database/bulk_CHIP/SRR10751613.sam
+./bwa mem -t 52 ~/database/bulk_CHIP/Oryza_sativa.IRGSP-1.0.dna.toplevel.fa ~/database/bulk_CHIP/SRR10751614_1.trim.fastq ~/database/bulk_CHIP/SRR10751614_2.trim.fastq > ~/database/bulk_CHIP/SRR10751614.sam
+./bwa mem -t 52 ~/database/bulk_CHIP/Oryza_sativa.IRGSP-1.0.dna.toplevel.fa ~/database/bulk_CHIP/SRR10751645_1.trim.fastq ~/database/bulk_CHIP/SRR10751645_2.trim.fastq > ~/database/bulk_CHIP/SRR10751645.sam
+./bwa mem -t 52 ~/database/bulk_CHIP/Oryza_sativa.IRGSP-1.0.dna.toplevel.fa ~/database/bulk_CHIP/SRR10751646_1.trim.fastq ~/database/bulk_CHIP/SRR10751646_2.trim.fastq > ~/database/bulk_CHIP/SRR10751646.sam
+./bwa mem -t 52 ~/database/bulk_CHIP/Oryza_sativa.IRGSP-1.0.dna.toplevel.fa ~/database/bulk_CHIP/SRR10751647_1.trim.fastq ~/database/bulk_CHIP/SRR10751647_2.trim.fastq > ~/database/bulk_CHIP/SRR10751647.sam
+./bwa mem -t 52 ~/database/bulk_CHIP/Oryza_sativa.IRGSP-1.0.dna.toplevel.fa ~/database/bulk_CHIP/SRR10751648_1.trim.fastq ~/database/bulk_CHIP/SRR10751648_2.trim.fastq > ~/database/bulk_CHIP/SRR10751648.sam
+
+samtools view --threads 52 -bS ~/database/bulk_CHIP/sam/SRR10751611.sam -o ~/database/bulk_CHIP/bam/SRR10751611.bam
+samtools view --threads 52 -bS ~/database/bulk_CHIP/sam/SRR10751612.sam -o ~/database/bulk_CHIP/bam/SRR10751612.bam
+samtools view --threads 52 -bS ~/database/bulk_CHIP/sam/SRR10751613.sam -o ~/database/bulk_CHIP/bam/SRR10751613.bam
+samtools view --threads 52 -bS ~/database/bulk_CHIP/sam/SRR10751614.sam -o ~/database/bulk_CHIP/bam/SRR10751614.bam
+samtools view --threads 52 -bS ~/database/bulk_CHIP/sam/SRR10751645.sam -o ~/database/bulk_CHIP/bam/SRR10751645.bam
+samtools view --threads 52 -bS ~/database/bulk_CHIP/sam/SRR10751646.sam -o ~/database/bulk_CHIP/bam/SRR10751646.bam
+samtools view --threads 52 -bS ~/database/bulk_CHIP/sam/SRR10751647.sam -o ~/database/bulk_CHIP/bam/SRR10751647.bam
+samtools view --threads 52 -bS ~/database/bulk_CHIP/sam/SRR10751648.sam -o ~/database/bulk_CHIP/bam/SRR10751648.bam
+samtools sort ~/database/bulk_CHIP/bam/SRR10751611.bam --threads 52 -o ~/database/bulk_CHIP/bam/SRR10751611.sorted.bam
+samtools sort ~/database/bulk_CHIP/bam/SRR10751612.bam --threads 52 -o ~/database/bulk_CHIP/bam/SRR10751612.sorted.bam
+samtools sort ~/database/bulk_CHIP/bam/SRR10751613.bam --threads 52 -o ~/database/bulk_CHIP/bam/SRR10751613.sorted.bam
+samtools sort ~/database/bulk_CHIP/bam/SRR10751614.bam --threads 52 -o ~/database/bulk_CHIP/bam/SRR10751614.sorted.bam
+samtools sort ~/database/bulk_CHIP/bam/SRR10751645.bam --threads 52 -o ~/database/bulk_CHIP/bam/SRR10751645.sorted.bam
+samtools sort ~/database/bulk_CHIP/bam/SRR10751646.bam --threads 52 -o ~/database/bulk_CHIP/bam/SRR10751646.sorted.bam
+samtools sort ~/database/bulk_CHIP/bam/SRR10751647.bam --threads 52 -o ~/database/bulk_CHIP/bam/SRR10751647.sorted.bam
+samtools sort ~/database/bulk_CHIP/bam/SRR10751648.bam --threads 52 -o ~/database/bulk_CHIP/bam/SRR10751648.sorted.bam
+samtools rmdup ~/database/bulk_CHIP/bam/SRR10751611.sorted.bam ~/database/bulk_CHIP/bam/SRR10751611.rmdup.bam
+samtools rmdup ~/database/bulk_CHIP/bam/SRR10751612.sorted.bam ~/database/bulk_CHIP/bam/SRR10751612.rmdup.bam
+samtools rmdup ~/database/bulk_CHIP/bam/SRR10751613.sorted.bam ~/database/bulk_CHIP/bam/SRR10751613.rmdup.bam
+samtools rmdup ~/database/bulk_CHIP/bam/SRR10751614.sorted.bam ~/database/bulk_CHIP/bam/SRR10751614.rmdup.bam
+samtools rmdup ~/database/bulk_CHIP/bam/SRR10751645.sorted.bam ~/database/bulk_CHIP/bam/SRR10751645.rmdup.bam
+samtools rmdup ~/database/bulk_CHIP/bam/SRR10751646.sorted.bam ~/database/bulk_CHIP/bam/SRR10751646.rmdup.bam
+samtools rmdup ~/database/bulk_CHIP/bam/SRR10751647.sorted.bam ~/database/bulk_CHIP/bam/SRR10751647.rmdup.bam
+samtools rmdup ~/database/bulk_CHIP/bam/SRR10751648.sorted.bam ~/database/bulk_CHIP/bam/SRR10751648.rmdup.bam
+samtools view -b ~/database/bulk_CHIP/bam/SRR10751611.rmdup.bam -q 30 -o ~/database/bulk_CHIP/bam/SRR10751611.unique.bam
+samtools view -b ~/database/bulk_CHIP/bam/SRR10751612.rmdup.bam -q 30 -o ~/database/bulk_CHIP/bam/SRR10751612.unique.bam
+samtools view -b ~/database/bulk_CHIP/bam/SRR10751613.rmdup.bam -q 30 -o ~/database/bulk_CHIP/bam/SRR10751613.unique.bam
+samtools view -b ~/database/bulk_CHIP/bam/SRR10751614.rmdup.bam -q 30 -o ~/database/bulk_CHIP/bam/SRR10751614.unique.bam
+samtools view -b ~/database/bulk_CHIP/bam/SRR10751645.rmdup.bam -q 30 -o ~/database/bulk_CHIP/bam/SRR10751645.unique.bam
+samtools view -b ~/database/bulk_CHIP/bam/SRR10751646.rmdup.bam -q 30 -o ~/database/bulk_CHIP/bam/SRR10751646.unique.bam
+samtools view -b ~/database/bulk_CHIP/bam/SRR10751647.rmdup.bam -q 30 -o ~/database/bulk_CHIP/bam/SRR10751647.unique.bam
+samtools view -b ~/database/bulk_CHIP/bam/SRR10751648.rmdup.bam -q 30 -o ~/database/bulk_CHIP/bam/SRR10751648.unique.bam
+samtools index -b /public/home/tongcheng/database/bulk_CHIP/bam/SRR10751612.unique.bam
+samtools index -b /public/home/tongcheng/database/bulk_CHIP/bam/SRR10751613.unique.bam
+samtools index -b /public/home/tongcheng/database/bulk_CHIP/bam/SRR10751614.unique.bam
+samtools index -b /public/home/tongcheng/database/bulk_CHIP/bam/SRR10751645.unique.bam
+samtools index -b /public/home/tongcheng/database/bulk_CHIP/bam/SRR10751646.unique.bam
+samtools index -b /public/home/tongcheng/database/bulk_CHIP/bam/SRR10751647.unique.bam
+samtools index -b /public/home/tongcheng/database/bulk_CHIP/bam/SRR10751648.unique.bam
+
+
