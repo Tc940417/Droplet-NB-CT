@@ -1,0 +1,142 @@
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/result/sn_CT/Os/C4_snCT_5/output/alignment.fragments.sorted.bam \
+  -o H3K4me3_Nano_Tn5_rep1.bw \
+  --normalizeUsing CPM \
+  --binSize 50 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/result/sn_CT/Os/C4_snCT_6/output/alignment.fragments.sorted.bam \
+  -o H3K4me3_Nano_Tn5_rep2.bw \
+  --normalizeUsing CPM \
+  --binSize 50 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/result/sn_CT/Os/C4_snCT_7/output/alignment.fragments.sorted.bam \
+  -o H3K4me3_Nano_Tn5_Beads_rep1.bw \
+  --normalizeUsing CPM \
+  --binSize 50 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/result/sn_CT/Os/C4_snCT_8/output/alignment.fragments.sorted.bam \
+  -o H3K4me3_Nano_Tn5_Beads_rep2.bw \
+  --normalizeUsing CPM \
+  --binSize 50 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/database/bulk_CHIP/bam/SRR10751611.unique.bam \
+  -o H3K4me3_yl_rep1.bw \
+  --normalizeUsing CPM \
+  --binSize 50 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/database/bulk_CHIP/bam/SRR10751612.unique.bam \
+  -o H3K4me3_yl_rep2.bw \
+  --normalizeUsing CPM \
+  --binSize 50 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/database/bulk_CHIP/bam/SRR10751645.unique.bam \
+  -o H3K4me3_ml_rep1.bw \
+  --normalizeUsing CPM \
+  --binSize 50 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/bamCoverage \
+  -b /public/home/tongcheng/database/bulk_CHIP/bam/SRR10751646.unique.bam \
+  -o H3K4me3_ml_rep2.bw \
+  --normalizeUsing CPM \
+  --binSize 50 \
+  --extendReads \
+  --effectiveGenomeSize 373245519 \
+  -p 52
+
+
+/public/home/tongcheng/anaconda3/envs/scBridge/bin/multiBigwigSummary bins \
+    --bwfiles \
+        ~/database/bulk_CHIP/deeptools/H3K4me3_Nano_Tn5_rep1.bw \
+        ~/database/bulk_CHIP/deeptools/H3K4me3_Nano_Tn5_rep2.bw \
+        ~/database/bulk_CHIP/deeptools/H3K4me3_Nano_Tn5_Beads_rep1.bw \
+        ~/database/bulk_CHIP/deeptools/H3K4me3_Nano_Tn5_Beads_rep2.bw \
+        ~/database/bulk_CHIP/deeptools/H3K4me3_yl_rep1.bw \
+        ~/database/bulk_CHIP/deeptools/H3K4me3_yl_rep2.bw \
+        ~/database/bulk_CHIP/deeptools/H3K4me3_ml_rep1.bw \
+        ~/database/bulk_CHIP/deeptools/H3K4me3_ml_rep2.bw \
+    --numberOfProcessors 52 \
+    --labels H3K4me3_Nano_Tn5_rep1 H3K4me3_Nano_Tn5_rep2 H3K4me3_Nano_Tn5_Beads_rep1 H3K4me3_Nano_Tn5_Beads_rep2 H3K4me3_yl_rep1 H3K4me3_yl_rep2 H3K4me3_ml_rep1 H3K4me3_ml_rep2 \ 
+    -out H3K4me3_readCounts.npz \
+    --outRawCounts H3K4me3_readCounts.tab
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/computeMatrix reference-point \
+	-S ~/database/bulk_CHIP/deeptools/bw/H3K4me3_Nano_Tn5_rep1.bw \
+	    ~/database/bulk_CHIP/deeptools/bw/H3K4me3_Nano_Tn5_rep2.bw \
+	    ~/database/bulk_CHIP/deeptools/bw/H3K4me3_Nano_Tn5_Beads_rep1.bw \
+	    ~/database/bulk_CHIP/deeptools/bw/H3K4me3_Nano_Tn5_Beads_rep2.bw \
+                    ~/database/bulk_CHIP/deeptools/bw/H3K4me3_yl_rep1.bw \
+	    ~/database/bulk_CHIP/deeptools/bw/H3K4me3_yl_rep2.bw \
+	    ~/database/bulk_CHIP/deeptools/bw/H3K4me3_ml_rep1.bw \
+	    ~/database/bulk_CHIP/deeptools/bw/H3K4me3_ml_rep2.bw \
+	-R ~/ref/sn-CT_ref/Os/Osgene.bed \
+	--referencePoint TSS \
+                --beforeRegionStartLength 10000 \
+	--afterRegionStartLength 10000 \
+                --sortRegions keep \
+	-p 52 \
+	--skipZeros \
+                -o 10k_matrix.mat.gz
+
+
+/public/home/tongcheng/anaconda3/envs/deeptools_env/bin/plotHeatmap -m matrix.mat.gz \
+	-out 10kH3K4me3_Heatmap.pdf \
+	--samplesLabel snCT_Nano_Tn5 snCT_Nano_Tn5 snCT_Nano_Tn5_Beads snCT_Nano_Tn5_Beads Bulk_yl Bulk_yl Bulk_ml Bulk_ml \
+	--dpi 1200
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
