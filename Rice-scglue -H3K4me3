@@ -1,0 +1,109 @@
+from itertools import chain
+import anndata as ad
+import itertools
+import networkx as nx
+import pandas as pd
+import scanpy as sc
+import scglue
+import seaborn as sns
+from matplotlib import rcParams
+scglue.plot.set_publication_params()
+rcParams["figure.figsize"] = (4, 4)
+import matplotlib.pyplot as plt
+
+rna = ad.read_h5ad("/mnt/d/sn-CT_broadpeaks/merge_object/merge-ref/nip0.25_unknown.h5ad")
+rna.obs['batch'] = rna.obs['group']
+
+atac = ad.read_h5ad("/mnt/d/sn-CT_broadpeaks/merge_object/filter_cell_RDS/h3k4me3.h5ad")
+
+rna.obs["domain"] = "snRNA"
+atac.obs["domain"] = "snCT_H3K4me3"
+
+rna.X, rna.X.data
+rna.layers["counts"] = rna.X.copy()
+sc.pp.highly_variable_genes(rna, n_top_genes=1000, flavor="seurat_v3")
+
+atac.X, atac.X.data
+atac.obs['batch'] = ''
+atac.obs.loc[atac.obs['dataset'].isin(['C4_snCT_7', 'C4_snCT_8']), 'batch'] = 'ctrl_h3k4me3'
+atac.obs.loc[atac.obs['dataset'].isin(['C4_snCT_15', 'C4_snCT_16']), 'batch'] = 'heat_h3k4me3'
+
+rna.var.head()
+scglue.data.get_gene_annotation(rna, gtf="/mnt/d/sn-CT/Osref/Oryza_sativa.MSU.chr.checked.signac.seurat_gene_id.gtf",gtf_by="gene_name")
+rna.var.loc[:, ["chrom", "chromStart", "chromEnd"]].head()
+atac.var_names[:5]
+split = atac.var_names.str.split(r"[:-]")
+atac.var["chrom"] = split.map(lambda x: x[0])
+atac.var["chromStart"] = split.map(lambda x: x[1]).astype(int)
+atac.var["chromEnd"] = split.map(lambda x: x[2]).astype(int)
+atac.var.head()
+guidance = scglue.genomics.rna_anchored_guidance_graph(rna, atac,gene_region="promoter")
+guidance
+scglue.graph.check_graph(guidance, [rna, atac])
+atac.var.head()
+
+rna.write("/mnt/e/sn_CT/glue-result/Rice/H3K4me3/Rice_rna-pre.h5ad", compression="gzip")
+atac.write("/mnt/e/sn_CT/glue-result/Rice/H3K4me3/Rice_atac-pre.h5ad", compression="gzip")
+nx.write_graphml(guidance, "/mnt/e/sn_CT/glue-result/Rice/H3K4me3/guidance.graphml.gz")
+
+rna = ad.read_h5ad("/mnt/e/sn_CT/glue-result/Rice/H3K4me3/Rice_rna-pre.h5ad")
+atac = ad.read_h5ad("/mnt/e/sn_CT/glue-result/Rice/H3K4me3/Rice_atac-pre.h5ad")
+guidance = nx.read_graphml("/mnt/e/sn_CT/glue-result/Rice/H3K4me3/guidance.graphml.gz")
+
+
+scglue.models.configure_dataset(rna, "NB", use_highly_variable=True,use_layer="counts",use_cell_type="cell_type",use_batch="batch")
+scglue.models.configure_dataset(atac, "NB", use_highly_variable=True,use_batch="batch")
+guidance_hvf = guidance.subgraph(chain(rna.var.query("highly_variable").index,atac.var.query("highly_variable").index)).copy()
+glue = scglue.models.fit_SCGLUE({"rna": rna, "atac": atac}, guidance_hvf,fit_kws={"directory": "glue"})
+
+dx = scglue.models.integration_consistency(glue, {"rna": rna, "atac": atac}, guidance_hvf)
+dx
+
+import matplotlib.pyplot as plt
+_ = sns.lineplot(x="n_meta", y="consistency", data=dx).axhline(y=0.05, c="darkred", ls="--")
+plt.show()
+
+rna.obsm["X_glue"] = glue.encode_data("rna", rna)
+atac.obsm["X_glue"] = glue.encode_data("atac", atac)
+
+scglue.data.transfer_labels(ref=rna, query=atac,field="cell_type",use_rep="X_glue",key_added="cell_type")
+
+feature_embeddings = glue.encode_graph(guidance_hvf)
+feature_embeddings = pd.DataFrame(feature_embeddings, index=glue.vertices)
+feature_embeddings.iloc[:5, :5]
+
+rna.varm["X_glue"] = feature_embeddings.reindex(rna.var_names).to_numpy()
+atac.varm["X_glue"] = feature_embeddings.reindex(atac.var_names).to_numpy()
+
+combined = ad.concat([rna, atac])
+sc.pp.neighbors(combined, use_rep="X_glue", metric="cosine")
+sc.tl.umap(combined)
+sc.pl.umap(combined, color=["cell_type", "domain"], wspace=0.65)
+
+glue.save("/mnt/e/sn_CT/glue-result/Rice/H3K4me3/glue.dill")
+rna.write("/mnt/e/sn_CT/glue-result/Rice/H3K4me3/Rice_rna.h5ad", compression="gzip")
+atac.write("/mnt/e/sn_CT/glue-result/Rice/H3K4me3/snCT_H3K4me3.h5ad", compression="gzip")
+nx.write_graphml(guidance_hvf, "/mnt/e/sn_CT/glue-result/Rice/H3K4me3/guidance-hvf.graphml.gz")
+
+cell_type_order = [
+    "Guard cell",
+    "Mesophyll",
+    "Epidermis",
+    "Large parenchyma",
+    "Fiber",
+    "Vascular"
+]
+
+combined.obs["cell_type"] = combined.obs["cell_type"].cat.reorder_categories(cell_type_order, ordered=True)
+sc.pl.umap(
+    combined,
+    color=["cell_type"],
+    palette=distinguishable_morandi_colors
+)
+
+sc.pl.umap(
+    combined[combined.obs["domain"] == "snCT_H3K4me3"],
+    color=["cell_type"],
+    palette=distinguishable_morandi_colors
+)
+
