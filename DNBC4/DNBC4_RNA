@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Requires dnbc4tools v2.1.3 in PATH.
+# Usage: bash run_atac.sh <fastq_dir> <reference_dir> [threads]
+# Reference directory must contain Os/ and Ara/.
+
+FASTQ_DIR="${1:?Usage: bash run_atac.sh <fastq_dir> <reference_dir> [threads]}"
+REF_DIR="${2:?Please specify the reference directory}"
+THREADS="${3:-52}"
+
+while read -r sample genome; do
+    dnbc4tools rna run \
+        --cDNAfastq1 "$FASTQ_DIR/${sample}_cDNA_R1.fq.gz" \
+        --cDNAfastq2 "$FASTQ_DIR/${sample}_cDNA_R2.fq.gz" \
+        --oligofastq1 "$FASTQ_DIR/${sample}_oligo_R1.fq.gz" \
+        --oligofastq2 "$FASTQ_DIR/${sample}_oligo_R2.fq.gz" \
+        --genomeDir "$REF_DIR/$genome" \
+        --name "$sample" \
+        --threads "$THREADS"
+done <<'SAMPLES'
+TR091 Ara ctrl_rep1
+TR092 Ara ctrl_rep2
+TR197 Os ctrl_rep1
+TR198 Os ctrl_rep2
+TR199 Os heat_rep1
+TR200 Os heat_rep2
