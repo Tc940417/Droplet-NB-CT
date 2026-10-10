@@ -1,0 +1,66 @@
+library(cicero)
+library(monocle3)
+library(Signac)
+library(Seurat)
+library(Matrix)
+library(rtracklayer)
+
+# Load the single-cell histone modification object.
+ct <- readRDS("path/to/h3k27.rds")
+
+ctlp <- subset(ct, subset = cell_type == "Large parenchyma")
+ctlp <- RunUMAP(ctlp, dims = 1:50, reduction = "glue")
+
+# Use the assay containing the histone modification peak counts.
+counts <- GetAssayData(
+  object = ctlp,
+  assay = "ATAC",
+  slot = "counts"
+)
+
+peak_ranges <- granges(ctlp[["ATAC"]])
+cell_metadata <- ctlp@meta.data
+
+feature_metadata <- data.frame(
+  gene_short_name = rownames(counts),
+  row.names = rownames(counts)
+)
+
+cds <- new_cell_data_set(
+  expression_data = counts,
+  cell_metadata = cell_metadata,
+  gene_metadata = feature_metadata
+)
+
+umap_coords <- Embeddings(ctlp, reduction = "umap")
+reducedDims(cds)$UMAP <- umap_coords
+
+cicero_cds <- make_cicero_cds(
+  cds,
+  reduced_coordinates = reducedDims(cds)$UMAP
+)
+
+# Rice chromosome lengths.
+genome_df <- data.frame(
+  V1 = as.character(1:12),
+  V2 = c(
+    43270923, 35937250, 36413819, 35502694,
+    29958434, 31248787, 29697621, 28443022,
+    23012720, 23207287, 29021106, 27531856
+  )
+)
+
+conns <- run_cicero(
+  cicero_cds,
+  genome_df,
+  sample_num = 100
+)
+
+# Load the rice GTF annotation.
+gtf_file <- "path/to/Oryza_sativa.MSU.chr.checked.signac.gtf"
+gene_anno <- rtracklayer::readGFF(gtf_file)
+
+gene_anno$chromosome <- gene_anno$seqid
+gene_anno$gene <- gene_anno$gene_id
+gene_anno$transcript <- gene_anno$transcript_id
+gene_anno$symbol <- gene_anno$gene_name
