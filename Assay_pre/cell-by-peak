@@ -1,0 +1,208 @@
+#!/usr/bin/env Rscript
+
+suppressPackageStartupMessages({
+  library(Signac)
+  library(Seurat)
+  library(GenomicRanges)
+})
+
+# Usage: Rscript create_snCT_objects.R <input_dir> <output_dir>
+# Input: <input_dir>/<sample_id>/{NA_peaks.broadPeak,singlecell.csv,fragments.tsv.gz}
+# Fragment files must have corresponding tabix indexes (.tbi).
+
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 2L) {
+  stop("Usage: Rscript create_snCT_objects.R <input_dir> <output_dir>")
+}
+
+input_dir <- normalizePath(args[1], mustWork = TRUE)
+output_dir <- args[2]
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+samples <- c(5:10, 13:18)
+
+peak_columns <- c(
+  "chrom", "start", "end", "name", "score",
+  "strand", "signal", "pval", "qval"
+)
+
+for (sample in samples) {
+  message("Processing sample ", sample)
+  sample_dir <- file.path(input_dir, sample)
+
+  # Read peaks and convert BED zero-based starts to GRanges coordinates.
+  peaks <- read.table(
+    file.path(sample_dir, "NA_peaks.broadPeak"),
+    col.names = peak_columns,
+    stringsAsFactors = FALSE
+  )
+
+  ranges <- makeGRangesFromDataFrame(
+    peaks,
+    keep.extra.columns = TRUE,
+    starts.in.df.are.0based = TRUE
+  )
+  ranges <- ranges[width(ranges) > 20 & width(ranges) < 10000]
+
+  # Read cell metadata.
+  metadata <- read.csv(
+    file.path(sample_dir, "singlecell.csv"),
+    row.names = 1,
+    stringsAsFactors = FALSE
+  )
+  metadata <- metadata[
+    !is.na(metadata$is_cell_barcode) & metadata$is_cell_barcode > 0,
+    ,
+    drop = FALSE
+  ]
+
+  if (length(ranges) == 0L || nrow(metadata) == 0L) {
+    stop("No retained peaks or cells for sample ", sample)
+  }
+
+  # Avoid division by zero when calculating QC metrics.
+  valid <- !is.na(metadata$fragments) & metadata$fragments > 0
+  metadata$log10_uniqueFrags <- NA_real_
+  metadata$pct_reads_in_peaks <- NA_real_
+  metadata$pct_reads_in_tss <- NA_real_
+
+  metadata$log10_uniqueFrags[valid] <- log10(metadata$fragments[valid])
+  metadata$pct_reads_in_peaks[valid] <-
+    metadata$peak_region_fragments[valid] / metadata$fragments[valid] * 100
+  metadata$pct_reads_in_tss[valid] <-
+    metadata$TSS_region_fragments[valid] / metadata$fragments[valid] * 100
+
+  # Create fragment object and peak-by-cell count matrix.
+  barcodes <- rownames(metadata)
+  fragments <- CreateFragmentObject(
+    path = file.path(sample_dir, "fragments.tsv.gz"),
+    cells = setNames(barcodes, barcodes)
+  )
+
+  counts <- FeatureMatrix(
+    fragments = fragments,
+    features = ranges,
+    cells = barcodes
+  )
+
+  # Create and save one Seurat object per sample.
+  assay <- CreateChromatinAssay(
+    counts = counts,
+    ranges = ranges,
+    fragments = fragments
+  )
+
+  object <- CreateSeuratObject(
+    counts = assay,
+    assay = "CT",
+    meta.data = metadata
+  )
+
+  saveRDS(
+    object,
+    file = file.path(output_dir, paste0("snCT_", sample, ".rds"))
+  )
+
+  rm(peaks, ranges, metadata, fragments, counts, assay, object)
+  invisible(gc())
+}
+
+args <- commandArgs(trailingOnly = TRUE)
+rice_gtf <- args[1]
+arabidopsis_gtf <- args[2]
+output_dir <- args[3]
+
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+folders <- c(5:10, 13:18)
+rice_samples <- c(5:8, 13:18)
+arabidopsis_samples <- c(9, 10)
+
+# Rice annotation.
+annotations <- import(rice_gtf)
+
+rice_lengths <- c(
+  "1" = 43270923, "2" = 35937250, "3" = 36413819,
+  "4" = 35502694, "5" = 29958434, "6" = 31248787,
+  "7" = 29697621, "8" = 28443022, "9" = 23012720,
+  "10" = 23207287, "11" = 29021106, "12" = 27531856
+)
+
+seqlengths(annotations) <- rice_lengths
+annotations$gene_biotype <- "protein_coding"
+genome(annotations) <- "MSU_osa1r7"
+
+for (i in rice_samples) {
+  obj <- get(paste0("snCT_", i))
+  Annotation(obj) <- annotations
+  assign(paste0("snCT_", i), obj)
+}
+
+# Arabidopsis annotation: samples 9 and 10.
+anno <- import(arabidopsis_gtf)
+anno$gene_biotype <- "protein_coding"
+genome(anno) <- "Ara"
+
+for (i in arabidopsis_samples) {
+  obj <- get(paste0("snCT_", i))
+  Annotation(obj) <- anno
+  assign(paste0("snCT_", i), obj)
+}
+
+# Calculate QC metrics.
+for (i in folders) {
+  message("Processing snCT_", i)
+
+  obj <- get(paste0("snCT_", i))
+  obj <- NucleosomeSignal(object = obj)
+  obj <- TSSEnrichment(object = obj)
+
+  obj$nucleosome_group <- ifelse(
+    obj$nucleosome_signal > 4,
+    "NS > 4",
+    "NS <= 4"
+  )
+
+  assign(paste0("snCT_", i), obj)
+}
+
+# Filter cells.
+for (i in folders) {
+  message("Filtering snCT_", i)
+
+  obj <- get(paste0("snCT_", i))
+
+  obj <- subset(
+    x = obj,
+    subset = nCount_CT > 1000 &
+      nCount_CT < 100000 &
+      pct_reads_in_peaks > 15 &
+      nucleosome_signal < 4 &
+      TSS.enrichment > 1
+  )
+
+  assign(paste0("snCT_", i), obj)
+}
+
+# Calculate FRiP.
+for (i in folders) {
+  message("Running FRiP for snCT_", i)
+
+  obj <- get(paste0("snCT_", i))
+  obj <- FRiP(
+    object = obj,
+    assay = "CT",
+    total.fragments = "fragments"
+  )
+
+  assign(paste0("snCT_", i), obj)
+}
+
+# Save objects using the original save() format; read with load().
+for (i in folders) {
+  save(
+    list = paste0("snCT_", i),
+    file = file.path(output_dir, paste0("snCT_", i, ".RData"))
+  )
+}
+
