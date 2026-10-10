@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage:
+# bash call_broad_peaks.sh <snct_dir> <output_dir>
+# Requires macs3 in PATH.
+
+SNCT_DIR="${1:?Please specify the snCT directory}"
+OUTPUT_DIR="${2:?Please specify the output directory}"
+
+for sample in 5 6 7 8 13 14 15 16 17 18; do
+    macs3 callpeak \
+        -t "$SNCT_DIR/C4_snCT_${sample}/output/alignment.fragments.sorted.bam" \
+        -f BAM \
+        -g 373245519 \
+        --broad \
+        --broadcutoff 0.2 \
+        --nomodel \
+        --extsize 147 \
+        --call-summits \
+        --outdir "$OUTPUT_DIR/broadCT${sample}_peaks_result"
+done
