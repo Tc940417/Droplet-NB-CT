@@ -88,3 +88,154 @@ plotHeatmap \
         Bulk_ml_rep1 \
         Bulk_ml_rep2 \
     --dpi 1200
+##############################################################################
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage:
+# bash snct_deeptools.sh <snct_dir> <chip_bam_dir> <bed_dir> <output_dir> [threads]
+#
+# Requires deepTools commands in PATH and indexed BAM files.
+# snct_dir: C4_snCT_<sample>/output/alignment.fragments.sorted.bam
+# chip_bam_dir: SRR<accession>.unique.bam
+# bed_dir: Osgene.bed, H3K4me3_nochr.bed, H3K27ac_nochr.bed
+
+SNCT_DIR="${1:?Please specify the snCT directory}"
+CHIP_BAM_DIR="${2:?Please specify the ChIP BAM directory}"
+BED_DIR="${3:?Please specify the BED directory}"
+OUTPUT_DIR="${4:?Please specify the output directory}"
+THREADS="${5:-52}"
+
+mkdir -p "$OUTPUT_DIR"/{bw,correlation,matrix,heatmap,fingerprint}
+
+bam_files=()
+bw_files=()
+labels=()
+h3k4_bw=()
+h3k27ac_bw=()
+
+# Sample order is shared across all analyses.
+while read -r sample mark label; do
+    bam="$SNCT_DIR/C4_snCT_${sample}/output/alignment.fragments.sorted.bam"
+    bw="$OUTPUT_DIR/bw/${label}.bw"
+
+    bam_files+=("$bam")
+    bw_files+=("$bw")
+    labels+=("$label")
+
+    case "$mark" in
+        H3K4me3) h3k4_bw+=("$bw") ;;
+        H3K27ac) h3k27ac_bw+=("$bw") ;;
+    esac
+done <<'SAMPLES'
+5 H3K4me3 ctrl_h3k4me3_Nano_Tn5_rep1
+6 H3K4me3 ctrl_h3k4me3_Nano_Tn5_rep2
+7 H3K4me3 ctrl_h3k4me3_Nano_Tn5_Beads_rep1
+8 H3K4me3 ctrl_h3k4me3_Nano_Tn5_Beads_rep2
+13 H3K27ac ctrl_h3k27ac_Nano_Tn5_Beads_rep1
+14 H3K27ac ctrl_h3k27ac_Nano_Tn5_Beads_rep2
+15 H3K4me3 heat_h3k4me3_Nano_Tn5_Beads_rep1
+16 H3K4me3 heat_h3k4me3_Nano_Tn5_Beads_rep2
+17 H3K27ac heat_h3k27ac_Nano_Tn5_Beads_rep1
+18 H3K27ac heat_h3k27ac_Nano_Tn5_Beads_rep2
+SAMPLES
+
+# Summarize BAM coverage in 1-kb bins.
+multiBamSummary bins \
+    --bamfiles "${bam_files[@]}" \
+    --numberOfProcessors "$THREADS" \
+    --binSize 1000 \
+    --minMappingQuality 30 \
+    --labels "${labels[@]}" \
+    -out "$OUTPUT_DIR/correlation/readCounts.npz" \
+    --outRawCounts "$OUTPUT_DIR/correlation/readCounts.tab"
+
+# Pearson correlation scatterplots.
+plotCorrelation \
+    -in "$OUTPUT_DIR/correlation/readCounts.npz" \
+    --corMethod pearson \
+    --skipZeros \
+    --plotTitle "Pearson Correlation of Average Scores Per snCT" \
+    --whatToPlot scatterplot \
+    --plotFile "$OUTPUT_DIR/correlation/PearsonCorr.pdf" \
+    --plotFileFormat pdf
+
+# Generate CPM-normalized bigWig files for all ten samples.
+for i in "${!bam_files[@]}"; do
+    bamCoverage \
+        -b "${bam_files[$i]}" \
+        -o "${bw_files[$i]}" \
+        --normalizeUsing CPM \
+        --binSize 10 \
+        --extendReads \
+        --effectiveGenomeSize 373245519 \
+        -p "$THREADS"
+done
+
+# Scale-region matrices: upstream 3 kb, body 5 kb, downstream 3 kb.
+computeMatrix scale-regions \
+    -S "${bw_files[@]}" \
+    -R "$BED_DIR/Osgene.bed" \
+    --beforeRegionStartLength 3000 \
+    --regionBodyLength 5000 \
+    --afterRegionStartLength 3000 \
+    -p "$THREADS" \
+    --skipZeros \
+    -o "$OUTPUT_DIR/matrix/all_samples_Osgene_matrix.mat.gz"
+
+computeMatrix scale-regions \
+    -S "${h3k4_bw[@]}" \
+    -R "$BED_DIR/H3K4me3_nochr.bed" \
+    --beforeRegionStartLength 3000 \
+    --regionBodyLength 5000 \
+    --afterRegionStartLength 3000 \
+    -p "$THREADS" \
+    --skipZeros \
+    -o "$OUTPUT_DIR/matrix/H3K4me3_matrix.mat.gz"
+
+computeMatrix scale-regions \
+    -S "${h3k27ac_bw[@]}" \
+    -R "$BED_DIR/H3K27ac_nochr.bed" \
+    --beforeRegionStartLength 3000 \
+    --regionBodyLength 5000 \
+    --afterRegionStartLength 3000 \
+    -p "$THREADS" \
+    --skipZeros \
+    -o "$OUTPUT_DIR/matrix/H3K27ac_matrix.mat.gz"
+
+# Plot heatmaps from the matrices generated above.
+plotHeatmap \
+    -m "$OUTPUT_DIR/matrix/all_samples_Osgene_matrix.mat.gz" \
+    -out "$OUTPUT_DIR/heatmap/all_samples_Osgene_Heatmap.pdf"
+
+plotHeatmap \
+    -m "$OUTPUT_DIR/matrix/H3K4me3_matrix.mat.gz" \
+    -out "$OUTPUT_DIR/heatmap/H3K4me3_Heatmap.pdf"
+
+plotHeatmap \
+    -m "$OUTPUT_DIR/matrix/H3K27ac_matrix.mat.gz" \
+    -out "$OUTPUT_DIR/heatmap/H3K27ac_Heatmap.pdf"
+
+# Compare bulk ChIP-seq and snCT fingerprints.
+plotFingerprint \
+    -b \
+        "$CHIP_BAM_DIR/SRR10751669.unique.bam" \
+        "$CHIP_BAM_DIR/SRR10751611.unique.bam" \
+        "$CHIP_BAM_DIR/SRR10751612.unique.bam" \
+        "$CHIP_BAM_DIR/SRR10751645.unique.bam" \
+        "$CHIP_BAM_DIR/SRR10751646.unique.bam" \
+        "${bam_files[0]}" \
+        "${bam_files[1]}" \
+        "${bam_files[2]}" \
+        "${bam_files[3]}" \
+    --labels \
+        Bulk_input \
+        ChIP_yl_1 ChIP_yl_2 ChIP_ml_1 ChIP_ml_2 \
+        snCT_Nano-Tn5_1 snCT_Nano-Tn5_2 \
+        snCT_Nano-Tn5_Beads_1 snCT_Nano-Tn5_Beads_2 \
+    --minMappingQuality 30 \
+    --skipZeros \
+    -T "Fingerprints of different samples" \
+    --plotFile "$OUTPUT_DIR/fingerprint/fingerprints.pdf" \
+    -p "$THREADS" \
+    --outRawCounts "$OUTPUT_DIR/fingerprint/fingerprints.tab"
