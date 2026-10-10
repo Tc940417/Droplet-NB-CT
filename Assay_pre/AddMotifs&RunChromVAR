@@ -1,0 +1,33 @@
+library(universalmotif)
+library(Signac)
+library(Seurat)
+library(JASPAR2026)
+library(TFBSTools)
+library(patchwork)
+library(BSgenome.Oryza.sativa.Ensembl.Plants.Osativa.IRGSP)
+library(RSQLite)
+
+db_file <- "path/to/JASPAR2026.sqlite3"
+con <- dbConnect(RSQLite::SQLite(), db_file)
+
+pfm <- TFBSTools::getMatrixSet(
+  con,
+  list(
+    collection = "CORE",
+    tax_group = "plants",
+    all_versions = FALSE
+  )
+)
+
+h3k4 <- readRDS("path/to/sn_H3K4me3.anno.addRNA.rds")
+
+h3k4 <- AddMotifs(
+  object = h3k4,
+  genome = BSgenome.Oryza.sativa.Ensembl.Plants.Osativa.IRGSP,
+  pfm = pfm
+)
+
+h3k4 <- RunChromVAR(
+  object = h3k4,
+  genome = BSgenome.Oryza.sativa.Ensembl.Plants.Osativa.IRGSP
+)
