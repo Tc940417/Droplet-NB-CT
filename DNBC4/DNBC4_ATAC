@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Requires dnbc4tools v2.1.3 in PATH.
+# Usage: bash run_atac.sh <fastq_dir> <reference_dir> [threads]
+# Reference directory must contain Os/ and Ara/.
+
+FASTQ_DIR="${1:?Usage: bash run_atac.sh <fastq_dir> <reference_dir> [threads]}"
+REF_DIR="${2:?Please specify the reference directory}"
+THREADS="${3:-52}"
+
+while read -r sample prefix genome; do
+    dnbc4tools atac run \
+        --fastq1 "$FASTQ_DIR/${prefix}_read_1.fq.gz" \
+        --fastq2 "$FASTQ_DIR/${prefix}_read_2.fq.gz" \
+        --genomeDir "$REF_DIR/$genome" \
+        --bam \
+        --name "$sample" \
+        --threads "$THREADS"
+done <<'SAMPLES'
+snCT_5  V350237635_L02 Os_ctrl_h3k4me3_Nano_Tn5_rep1
+snCT_6  V350237527_L04 Os_ctrl_h3k4me3_Nano_Tn5_rep2
+snCT_7  V350237635_L01 Os_ctrl_h3k4me3_Nano_Tn5_Beads_rep1
+snCT_8  V350237527_L02 Os_ctrl_h3k4me3_Nano_Tn5_Beads_rep2
+snCT_9  V350240421_L04 Ara_ctrl_h3k4me3_Nano_Tn5_Beads_rep1
+snCT_10 V350255894_L04 Ara_ctrl_h3k4me3_Nano_Tn5_Beads_rep2
+snCT_13 V350211902_L03 Os_ctrl_h3k27ac_Nano_Tn5_Beads_rep1
+snCT_14 V350211902_L04 Os_ctrl_h3k27ac_Nano_Tn5_Beads_rep2
+snCT_15 V350265526_L02 Os_heat_h3k4me3_Nano_Tn5_Beads_rep1
+snCT_16 V350237527_L01 Os_heat_h3k4me3_Nano_Tn5_Beads_rep2
+snCT_17 V350237496_L03 Os_heat_h3k27ac_Nano_Tn5_Beads_rep1
+snCT_18 V350237496_L04 Os_heat_h3k27ac_Nano_Tn5_Beads_rep2
