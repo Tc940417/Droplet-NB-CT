@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage:
+# bash process_chip.sh <input_dir> <reference_fasta> <output_dir> [threads]
+# Requires fastp, bwa and samtools in PATH.
+# The reference FASTA must already be indexed by bwa.
+
+INPUT_DIR="${1:?Please specify the input directory}"
+REFERENCE="${2:?Please specify the reference FASTA}"
+OUTPUT_DIR="${3:?Please specify the output directory}"
+THREADS="${4:-52}"
+
+mkdir -p "$OUTPUT_DIR"/{trim,sam,bam,qc}
+
+while read -r folder sample; do
+    fastp \
+        -i "$INPUT_DIR/$folder/${sample}_1.fastq" \
+        -I "$INPUT_DIR/$folder/${sample}_2.fastq" \
+        -o "$OUTPUT_DIR/trim/${sample}_1.trim.fastq" \
+        -O "$OUTPUT_DIR/trim/${sample}_2.trim.fastq" \
+        -h "$OUTPUT_DIR/qc/${sample}.fastp.html" \
+        -j "$OUTPUT_DIR/qc/${sample}.fastp.json"
+
+    bwa mem -t "$THREADS" \
+        "$REFERENCE" \
+        "$OUTPUT_DIR/trim/${sample}_1.trim.fastq" \
+        "$OUTPUT_DIR/trim/${sample}_2.trim.fastq" \
+        > "$OUTPUT_DIR/sam/${sample}.sam"
+
+    samtools view --threads "$THREADS" -bS \
+        "$OUTPUT_DIR/sam/${sample}.sam" \
+        -o "$OUTPUT_DIR/bam/${sample}.bam"
+
+    samtools sort --threads "$THREADS" \
+        "$OUTPUT_DIR/bam/${sample}.bam" \
+        -o "$OUTPUT_DIR/bam/${sample}.sorted.bam"
+
+    samtools rmdup \
+        "$OUTPUT_DIR/bam/${sample}.sorted.bam" \
+        "$OUTPUT_DIR/bam/${sample}.rmdup.bam"
+
+    samtools view -b -q 30 \
+        "$OUTPUT_DIR/bam/${sample}.rmdup.bam" \
+        -o "$OUTPUT_DIR/bam/${sample}.unique.bam"
+
+    samtools index -b \
+        "$OUTPUT_DIR/bam/${sample}.unique.bam"
+done <<'SAMPLES'
+yl_H3K4me3_1 SRR10751611
+yl_H3K4me3_2 SRR10751612
+ml_H3K4me3_1 SRR10751645
+ml_H3K4me3_2 SRR10751646
+SAMPLES
