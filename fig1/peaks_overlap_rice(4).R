@@ -1,74 +1,78 @@
+
+# ============================================================
+# Peak Overlap Analysis in Rice
+# Comparison of Nano-Tn5, Nano-Tn5-Beads, and Bulk ChIP
+# ============================================================
+
+# Step 1. Load required libraries
 library(GenomicRanges)
-library(rtracklayer)
 library(ChIPpeakAnno)
-library(ggVennDiagram)
-library(scales)  # for alpha()
-library(ggplot2)
 
-peak_1_rep1 <- read.table(
-  "D:/sn-CT_broadpeaks/5/NA_peaks.broadPeak",
-  col.names = c("chrom", "start", "end", "name", "score", "strand", 
-                "signal", "pval", "qval")
+# Step 2. Set input and output directories
+data_dir <- "MACS"
+output_dir <- "results"
+
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+
+# Step 3. Define peak files
+peak_files <- list(
+  Nano_Tn5_rep1 = "5/NA_peaks.broadPeak",
+  Nano_Tn5_rep2 = "6/NA_peaks.broadPeak",
+  Nano_Tn5_Beads_rep1 = "7/NA_peaks.broadPeak",
+  Nano_Tn5_Beads_rep2 = "8/NA_peaks.broadPeak",
+  Bulk_ChIP_yl_rep1 = "1611.broadPeak",
+  Bulk_ChIP_yl_rep2 = "1612.broadPeak",
+  Bulk_ChIP_ml_rep1 = "1645.broadPeak",
+  Bulk_ChIP_ml_rep2 = "1646.broadPeak"
 )
 
-peak_1_rep2 <- read.table(
-  "D:/sn-CT_broadpeaks/6/NA_peaks.broadPeak",
-  col.names = c("chrom", "start", "end", "name", "score", "strand", 
-                "signal", "pval", "qval")
-)
+# Step 4. Read broadPeak files and convert to GRanges
+read_broadpeak <- function(file) {
+  peak <- read.table(
+    file.path(data_dir, file),
+    header = FALSE,
+    col.names = c(
+      "chrom", "start", "end", "name", "score",
+      "strand", "signal", "pval", "qval"
+    )
+  )
 
-peak_2_rep1 <- read.table(
-  "D:/sn-CT_broadpeaks/7/NA_peaks.broadPeak",
-  col.names = c("chrom", "start", "end", "name", "score", "strand", 
-                "signal", "pval", "qval")
-)
+  # Convert BED 0-based starts to 1-based coordinates
+  peak$start <- peak$start + 1
 
-peak_2_rep2 <- read.table(
-  "D:/sn-CT_broadpeaks/8/NA_peaks.broadPeak",
-  col.names = c("chrom", "start", "end", "name", "score", "strand", 
-                "signal", "pval", "qval")
-)
+  makeGRangesFromDataFrame(
+    peak,
+    seqnames.field = "chrom",
+    start.field = "start",
+    end.field = "end",
+    ignore.strand = TRUE
+  )
+}
 
-peak_3_rep1 <- read.table(
-  "C:/Users/admin/Desktop/chip-peak/1611.broadPeak",
-  col.names = c("chrom", "start", "end", "name", "score", "strand", 
-                "signal", "pval", "qval")
-)
+peak_list <- lapply(peak_files, read_broadpeak)
 
-peak_3_rep2 <- read.table(
-  "C:/Users/admin/Desktop/chip-peak/1612.broadPeak",
-  col.names = c("chrom", "start", "end", "name", "score", "strand", 
-                "signal", "pval", "qval")
-)
+# Step 5. Merge peaks from biological replicates
+peaks_group1 <- reduce(c(
+  peak_list$Nano_Tn5_rep1,
+  peak_list$Nano_Tn5_rep2
+))
 
-peak_4_rep1 <- read.table(
-  "C:/Users/admin/Desktop/chip-peak/1645.broadPeak",
-  col.names = c("chrom", "start", "end", "name", "score", "strand", 
-                "signal", "pval", "qval")
-)
+peaks_group2 <- reduce(c(
+  peak_list$Nano_Tn5_Beads_rep1,
+  peak_list$Nano_Tn5_Beads_rep2
+))
 
-peak_4_rep2 <- read.table(
-  "C:/Users/admin/Desktop/chip-peak/1646.broadPeak",
-  col.names = c("chrom", "start", "end", "name", "score", "strand", 
-                "signal", "pval", "qval")
-)
+peaks_group3 <- reduce(c(
+  peak_list$Bulk_ChIP_yl_rep1,
+  peak_list$Bulk_ChIP_yl_rep2
+))
 
+peaks_group4 <- reduce(c(
+  peak_list$Bulk_ChIP_ml_rep1,
+  peak_list$Bulk_ChIP_ml_rep2
+))
 
-gr.peaks_1_1 <- makeGRangesFromDataFrame(peak_1_rep1)
-gr.peaks_1_2 <- makeGRangesFromDataFrame(peak_1_rep2)
-gr.peaks_2_1 <- makeGRangesFromDataFrame(peak_2_rep1)
-gr.peaks_2_2 <- makeGRangesFromDataFrame(peak_2_rep2)
-gr.peaks_3_1 <- makeGRangesFromDataFrame(peak_3_rep1)
-gr.peaks_3_2 <- makeGRangesFromDataFrame(peak_3_rep2)
-gr.peaks_4_1 <- makeGRangesFromDataFrame(peak_4_rep1)
-gr.peaks_4_2 <- makeGRangesFromDataFrame(peak_4_rep2)
-
-peaks_group1 <- reduce(x = c(gr.peaks_1_1, gr.peaks_1_2))
-peaks_group2 <- reduce(x = c(gr.peaks_2_1, gr.peaks_2_2))
-peaks_group3 <- reduce(x = c(gr.peaks_3_1, gr.peaks_3_2))
-peaks_group4 <- reduce(x = c(gr.peaks_4_1, gr.peaks_4_2))
-
-
+# Step 6. Identify overlapping peaks
 overlap_result <- findOverlapsOfPeaks(
   group1 = peaks_group1,
   group2 = peaks_group2,
@@ -76,33 +80,38 @@ overlap_result <- findOverlapsOfPeaks(
   group4 = peaks_group4
 )
 
+# Step 7. Define colors and sample names
+colors <- c(
+  "#264653",
+  "#2A9D8F",
+  "#E9C46A",
+  "#F4A261"
+)
 
-pdf("venn_diagram_peaks_rice(4).pdf", width = 15, height = 15)
-colors <- c("#264653","#2A9D8F","#E9C46A","#F4A261")
-sample_names <- c("snCT_Nano-Tn5", "snCT_Nano-Tn5_Beads", "Bulk_ChIP_yl", "Bulk_ChIP_ml")
+sample_names <- c(
+  "snCT_Nano-Tn5",
+  "snCT_Nano-Tn5_Beads",
+  "Bulk_ChIP_yl",
+  "Bulk_ChIP_ml"
+)
+
+# Step 8. Plot and save Venn diagram
+pdf(
+  file.path(output_dir, "venn_diagram_peaks_rice.pdf"),
+  width = 15,
+  height = 15
+)
+
 makeVennDiagram(
   overlap_result,
   NameOfPeaks = sample_names,
   fill = colors,
   lty = "blank",
   main = "Overlap of Peaks",
-  cat.col = colors,           # 设置分类标签的颜色
-  cat.cex = 1.2,              # 分类标签字体大小
-  cex = 1.2,                  # 数字标签字体大小
-  main.cex = 1.5              # 标题字体大小
-) +
-  scale_fill_gradientn(colours = alpha(colors,0.3))
+  cat.col = colors,
+  cat.cex = 1.2,
+  cex = 1.2,
+  main.cex = 1.5
+)
 
 dev.off()
-
-
-
-
-
-
-
-
-
-
-
-
