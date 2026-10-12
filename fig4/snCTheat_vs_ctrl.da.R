@@ -1,178 +1,157 @@
-library(ggplot2)
-library(tidyr)
+
+# ============================================================
+# Differential Histone Modification Peak Analysis in Rice
+# H3K4me3 and H3K27ac: Heat vs. Control Across Cell Types
+# ============================================================
+
+# Step 1. Load required libraries
 library(Seurat)
 library(Signac)
-library(patchwork)
-library(dplyr)
-library(purrr)
-library(dplyr)
-library(igraph)
-library(data.table)
-h3k4 <- readRDS("E:/sn_CT/RDS&h5ad/snCTaddRNAaddChromvar/h3k4.rds")
-h3k27 <- readRDS("E:/sn_CT/RDS&h5ad/snCTaddRNAaddChromvar/h3k27.rds")
-DefaultAssay(h3k4) <- "ATAC"
-DefaultAssay(h3k27) <- "ATAC"
-
-h3k4 <- RunTFIDF(h3k4)
-h3k27 <- RunTFIDF(h3k27)
-
-h3k4$celltype <- paste(h3k4$batch, h3k4$cell_type, sep = "_")
-h3k27$celltype <- paste(h3k27$batch, h3k27$cell_type, sep = "_")
-
-Idents(h3k4) <- "celltype"
-Idents(h3k27) <- "celltype"
-
-
-
-k4.me <- FindMarkers(
-  object = h3k4,
-  ident.1 = "heat_h3k4me3_Mesophyll",
-  ident.2 = "ctrl_h3k4me3_Mesophyll",
-  test.use = 'LR',
-  min.pct = 0.1,
-  latent.vars = c("nCount_ATAC","nFeature_ATAC"),
-  logfc.threshold= 0.25,
-  slot = "data"
-)
-
-k4.lp <- FindMarkers(
-  object = h3k4,
-  ident.1 = "heat_h3k4me3_Large parenchyma",
-  ident.2 = "ctrl_h3k4me3_Large parenchyma",
-  test.use = 'LR',
-  min.pct = 0.1,
-  latent.vars = c("nCount_ATAC","nFeature_ATAC"),
-  logfc.threshold= 0.25,
-  slot = "data"
-)
-
-k4.gc <- FindMarkers(
-  object = h3k4,
-  ident.1 = "heat_h3k4me3_Guard cell",
-  ident.2 = "ctrl_h3k4me3_Guard cell",
-  test.use = 'LR',
-  min.pct = 0.1,
-  latent.vars = c("nCount_ATAC","nFeature_ATAC"),
-  logfc.threshold= 0.25,
-  slot = "data"
-)
-
-k4.vs <- FindMarkers(
-  object = h3k4,
-  ident.1 = "heat_h3k4me3_Vascular",
-  ident.2 = "ctrl_h3k4me3_Vascular",
-  test.use = 'LR',
-  min.pct = 0.1,
-  latent.vars = c("nCount_ATAC","nFeature_ATAC"),
-  logfc.threshold= 0.25,
-  slot = "data"
-)
-
-k4.ep <- FindMarkers(
-  object = h3k4,
-  ident.1 = "heat_h3k4me3_Epidermis",
-  ident.2 = "ctrl_h3k4me3_Epidermis",
-  test.use = 'LR',
-  min.pct = 0.1,
-  latent.vars = c("nCount_ATAC","nFeature_ATAC"),
-  logfc.threshold= 0.25,
-  slot = "data"
-)
-
-k4.fb <- FindMarkers(
-  object = h3k4,
-  ident.1 = "heat_h3k4me3_Fiber",
-  ident.2 = "ctrl_h3k4me3_Fiber",
-  test.use = 'LR',
-  min.pct = 0.1,
-  latent.vars = c("nCount_ATAC","nFeature_ATAC"),
-  logfc.threshold= 0.25,
-  slot = "data"
-)
-
-########################################################
-
-k27.me <- FindMarkers(
-  object = h3k27,
-  ident.1 = "heat_h3k27ac_Mesophyll",
-  ident.2 = "ctrl_h3k27ac_Mesophyll",
-  test.use = 'LR',
-  min.pct = 0.1,
-  latent.vars = c("nCount_ATAC","nFeature_ATAC"),
-  logfc.threshold= 0.25,
-  slot = "data"
-)
-
-k27.lp <- FindMarkers(
-  object = h3k27,
-  ident.1 = "heat_h3k27ac_Large parenchyma",
-  ident.2 = "ctrl_h3k27ac_Large parenchyma",
-  test.use = 'LR',
-  min.pct = 0.1,
-  latent.vars = c("nCount_ATAC","nFeature_ATAC"),
-  logfc.threshold= 0.25,
-  slot = "data"
-)
-
-k27.gc <- FindMarkers(
-  object = h3k27,
-  ident.1 = "heat_h3k27ac_Guard cell",
-  ident.2 = "ctrl_h3k27ac_Guard cell",
-  test.use = 'LR',
-  min.pct = 0.1,
-  latent.vars = c("nCount_ATAC","nFeature_ATAC"),
-  logfc.threshold= 0.25,
-  slot = "data"
-)
-
-k27.vs <- FindMarkers(
-  object = h3k27,
-  ident.1 = "heat_h3k27ac_Vascular",
-  ident.2 = "ctrl_h3k27ac_Vascular",
-  test.use = 'LR',
-  min.pct = 0.1,
-  latent.vars = c("nCount_ATAC","nFeature_ATAC"),
-  logfc.threshold= 0.25,
-  slot = "data"
-)
-
-k27.ep <- FindMarkers(
-  object = h3k27,
-  ident.1 = "heat_h3k27ac_Epidermis",
-  ident.2 = "ctrl_h3k27ac_Epidermis",
-  test.use = 'LR',
-  min.pct = 0.1,
-  latent.vars = c("nCount_ATAC","nFeature_ATAC"),
-  logfc.threshold= 0.25,
-  slot = "data"
-)
-
-k27.fb <- FindMarkers(
-  object = h3k27,
-  ident.1 = "heat_h3k27ac_Fiber",
-  ident.2 = "ctrl_h3k27ac_Fiber",
-  test.use = 'LR',
-  min.pct = 0.1,
-  latent.vars = c("nCount_ATAC","nFeature_ATAC"),
-  logfc.threshold= 0.25,
-  slot = "data"
-)
-
-
-
 library(dplyr)
 library(tibble)
 
-k27.list <- list(
-  Mesophyll = k27.me,
-  Large_parenchyma = k27.lp,
-  Guard_cell = k27.gc,
-  Vascular = k27.vs,
-  Epidermis = k27.ep,
-  Fiber = k27.fb
+# Step 2. Set input and output directories
+data_dir <- "data"
+output_dir <- "marker_results"
+
+dir.create(
+  file.path(output_dir, "H3K4me3"),
+  showWarnings = FALSE,
+  recursive = TRUE
 )
 
-k27.sig <- lapply(k27.list, function(df) {
+dir.create(
+  file.path(output_dir, "H3K27ac"),
+  showWarnings = FALSE,
+  recursive = TRUE
+)
+
+# Step 3. Read Seurat objects
+h3k4 <- readRDS(
+  file.path(data_dir, "h3k4.rds")
+)
+
+h3k27 <- readRDS(
+  file.path(data_dir, "h3k27.rds")
+)
+
+# Step 4. Normalize ATAC assays and define identities
+prepare_object <- function(obj) {
+
+  DefaultAssay(obj) <- "ATAC"
+
+  obj <- RunTFIDF(obj)
+
+  obj$celltype <- paste(
+    obj$batch,
+    obj$cell_type,
+    sep = "_"
+  )
+
+  Idents(obj) <- "celltype"
+
+  return(obj)
+}
+
+h3k4 <- prepare_object(h3k4)
+h3k27 <- prepare_object(h3k27)
+
+# Step 5. Define cell types and output labels
+cell_info <- data.frame(
+  id = c("me", "lp", "gc", "vs", "ep", "fb"),
+  cell_type = c(
+    "Mesophyll",
+    "Large parenchyma",
+    "Guard cell",
+    "Vascular",
+    "Epidermis",
+    "Fiber"
+  ),
+  file_label = c(
+    "Mesophyll",
+    "LargeParenchyma",
+    "GuardCell",
+    "Vascular",
+    "Epidermis",
+    "Fiber"
+  )
+)
+
+# ============================================================
+# Part 1. Differential Peak Analysis
+# ============================================================
+
+# Step 6. Define differential analysis function
+run_da <- function(obj, mark, prefix, output_subdir) {
+
+  da_list <- lapply(seq_len(nrow(cell_info)), function(i) {
+
+    ct <- cell_info$cell_type[i]
+
+    heat_group <- paste0("heat_", mark, "_", ct)
+    ctrl_group <- paste0("ctrl_", mark, "_", ct)
+
+    # Check whether both groups exist
+    if (!all(c(heat_group, ctrl_group) %in% levels(Idents(obj)))) {
+      stop(paste("Missing cell groups:", heat_group, ctrl_group))
+    }
+
+    # Differential peak analysis using logistic regression
+    da <- FindMarkers(
+      object = obj,
+      ident.1 = heat_group,
+      ident.2 = ctrl_group,
+      assay = "ATAC",
+      test.use = "LR",
+      min.pct = 0.1,
+      latent.vars = c("nCount_ATAC", "nFeature_ATAC"),
+      logfc.threshold = 0.25,
+      only.pos = FALSE,
+      slot = "data"
+    )
+
+    # Save differential peak results
+    write.csv(
+      da,
+      file = file.path(
+        output_dir,
+        output_subdir,
+        paste0(prefix, "_", cell_info$file_label[i], ".csv")
+      ),
+      row.names = TRUE
+    )
+
+    return(da)
+  })
+
+  names(da_list) <- cell_info$id
+
+  return(da_list)
+}
+
+# Step 7. Identify H3K4me3 differential peaks
+k4_list <- run_da(
+  obj = h3k4,
+  mark = "h3k4me3",
+  prefix = "k4",
+  output_subdir = "H3K4me3"
+)
+
+# Step 8. Identify H3K27ac differential peaks
+k27_list <- run_da(
+  obj = h3k27,
+  mark = "h3k27ac",
+  prefix = "k27",
+  output_subdir = "H3K27ac"
+)
+
+# ============================================================
+# Part 2. Filter Significant H3K27ac Differential Peaks
+# ============================================================
+
+# Step 9. Filter significant H3K27ac peaks
+k27.sig <- lapply(k27_list, function(df) {
+
   df %>%
     rownames_to_column("peak") %>%
     filter(
@@ -182,27 +161,48 @@ k27.sig <- lapply(k27.list, function(df) {
     )
 })
 
+# Step 10. Combine significant peaks across cell types
 k27.sig.df <- bind_rows(
-  lapply(names(k27.sig), function(ct) {
+  lapply(seq_len(nrow(cell_info)), function(i) {
+
+    ct <- cell_info$id[i]
+
     k27.sig[[ct]] %>%
-      mutate(celltype = ct)
+      mutate(
+        celltype = cell_info$cell_type[i]
+      )
   })
 )
 
-write.csv(k4.me, "marker_results/H3K4me3/k4_Mesophyll.csv")
-write.csv(k4.lp, "marker_results/H3K4me3/k4_LargeParenchyma.csv")
-write.csv(k4.gc, "marker_results/H3K4me3/k4_GuardCell.csv")
-write.csv(k4.vs, "marker_results/H3K4me3/k4_Vascular.csv")
-write.csv(k4.ep, "marker_results/H3K4me3/k4_Epidermis.csv")
-write.csv(k4.fb, "marker_results/H3K4me3/k4_Fiber.csv")
+# Step 11. Save significant H3K27ac peaks
+write.csv(
+  k27.sig.df,
+  file = file.path(
+    output_dir,
+    "H3K27ac",
+    "H3K27ac_significant_differential_peaks.csv"
+  ),
+  row.names = FALSE
+)
 
-write.csv(k27.me, "marker_results/H3K27ac/k27_Mesophyll.csv")
-write.csv(k27.lp, "marker_results/H3K27ac/k27_LargeParenchyma.csv")
-write.csv(k27.gc, "marker_results/H3K27ac/k27_GuardCell.csv")
-write.csv(k27.vs, "marker_results/H3K27ac/k27_Vascular.csv")
-write.csv(k27.ep, "marker_results/H3K27ac/k27_Epidermis.csv")
-write.csv(k27.fb, "marker_results/H3K27ac/k27_Fiber.csv")
+# ============================================================
+# Part 3. Summarize Differential Peaks
+# ============================================================
 
+# Step 12. Count differential peaks per cell type
+peak_summary <- data.frame(
+  cell_type = cell_info$cell_type,
+  H3K4me3 = sapply(k4_list, nrow),
+  H3K27ac = sapply(k27_list, nrow),
+  H3K27ac_significant = sapply(k27.sig, nrow)
+)
 
+# Step 13. Save summary statistics
+write.csv(
+  peak_summary,
+  file = file.path(output_dir, "differential_peak_summary.csv"),
+  row.names = FALSE
+)
 
-
+# Step 14. Display results
+print(peak_summary)
