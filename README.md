@@ -79,19 +79,6 @@ The main tools and packages used in this repository include:
 
 Additional R and Python packages are specified in the corresponding scripts.
 
-## Usage
-
-Clone the repository:
-
-```bash
-git clone https://github.com/Tc940417/Droplet-NB-CT.git
-cd Droplet-NB-CT
-```
-
-Each directory contains scripts associated with a specific computational analysis or figure.
-
-Users should prepare the required input files and modify file paths where necessary before running individual scripts. Some analyses require intermediate Seurat objects, peak matrices, or AnnData files generated in previous steps.
-
 ## Data Availability
 
 Raw sequencing data are deposited in the NCBI Sequence Read Archive (SRA).
