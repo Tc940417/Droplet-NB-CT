@@ -1,80 +1,89 @@
-seurat_list <- list(sample2_rep1 = ctrl_H3K4me3_Nano_Tn5_rep1,sample2_rep2 = ctrl_H3K4me3_Nano_Tn5_rep2,
-                    sample3_rep1 = ctrl_H3K4me3_Nano_Tn5_Beads_rep1,sample3_rep2 = ctrl_H3K4me3_Nano_Tn5_Beads_rep2,
-                    sample4_rep1 = ctrl_H3K27ac_Nano_Tn5_Beads_rep1,sample4_rep2 = ctrl_H3K27ac_Nano_Tn5_Beads_rep2,
-                    sample5_rep1 = heat_H3K4me3_Nano_Tn5_Beads_rep1,sample5_rep2 = heat_H3K4me3_Nano_Tn5_Beads_rep2,
-                    sample6_rep1 = heat_H3K27ac_Nano_Tn5_Beads_rep1,sample6_rep2 = heat_H3K27ac_Nano_Tn5_Beads_rep2)
 
+# ============================================================
+# Unique Fragments Analysis
+# Comparison of Nano-Tn5 and Nano-Tn5-Beads in Rice
+# ============================================================
 
+# Step 1. Load required libraries
+library(Seurat)
+library(dplyr)
+library(ggplot2)
 
+# Step 2. Read Seurat objects
+data_dir <- "data"
+output_dir <- "results"
 
-##unique_frags##
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
-log10_uniqueFrags_df <- imap_dfr(seurat_list, ~{
+seurat_list <- list(
+  ctrl_H3K4me3_Nano_Tn5_rep1 = readRDS(file.path(data_dir, "snCT_5.rds")),
+  ctrl_H3K4me3_Nano_Tn5_rep2 = readRDS(file.path(data_dir, "snCT_6.rds")),
+  ctrl_H3K4me3_Nano_Tn5_Beads_rep1 = readRDS(file.path(data_dir, "snCT_7.rds")),
+  ctrl_H3K4me3_Nano_Tn5_Beads_rep2 = readRDS(file.path(data_dir, "snCT_8.rds"))
+)
+
+# Step 3. Extract log10 unique fragments
+frags_df <- bind_rows(lapply(names(seurat_list), function(sample) {
   data.frame(
-    cell_id = colnames(.x),
-    log10_uniqueFrags = .x$log10_uniqueFrags,
-    sample = .y,
-    stringsAsFactors = FALSE
+    Sample = sample,
+    log10_uniqueFrags = seurat_list[[sample]]$log10_uniqueFrags
   )
-}) %>% 
-  tidyr::pivot_wider(
-    names_from = sample,
-    values_from = log10_uniqueFrags
-  )
+}))
 
+# Remove missing values
+frags_df <- frags_df %>%
+  filter(!is.na(log10_uniqueFrags))
 
-log10_uniqueFrags_df_1 <- log10_uniqueFrags_df[,-1]
-
-colnames(log10_uniqueFrags_df_1) <- c("ctrl_H3K4me3_Nano_Tn5_rep1", "ctrl_H3K4me3_Nano_Tn5_rep2", 
-                                      "ctrl_H3K4me3_Nano_Tn5_Beads_rep1","ctrl_H3K4me3_Nano_Tn5_Beads_rep2"
+# Step 4. Define sample groups and plotting order
+frags_df$Sample <- factor(
+  frags_df$Sample,
+  levels = names(seurat_list)
 )
 
-sample_colors <- c(
-  rep('#df5734', 2),  # 
-  rep('#64a776', 2)),  # 
-  rep('#2d3462', 2),  # 
-  rep('#ebb1a4', 2),  # 
-  rep('#76a2be', 2)   # 
+frags_df$Group <- ifelse(
+  grepl("Beads", frags_df$Sample),
+  "Nano-Tn5-Beads",
+  "Nano-Tn5"
 )
 
-plot_long <- log10_uniqueFrags_df_1 %>%
-  pivot_longer(
-    cols = everything(),
-    names_to = "Sample",
-    values_to = "log10_uniqueFrags"
-  ) %>%
-  mutate(
-    Sample = factor(Sample, levels = colnames(log10_uniqueFrags_df_1)), # 保持原始列顺序
-    Group = rep(1:2, each = 2)[as.numeric(Sample)] # 创建分组变量用于颜色映射
-  )
+frags_df$Group <- factor(
+  frags_df$Group,
+  levels = c("Nano-Tn5", "Nano-Tn5-Beads")
+)
 
-plot <- ggplot(plot_long, aes(x = Sample, y = log10_uniqueFrags , fill = factor(Group))) +
-  # 小提琴图层
+# Step 5. Plot unique fragments distributions
+p <- ggplot(frags_df, aes(x = Sample, y = log10_uniqueFrags, fill = Group)) +
   geom_violin(
-    width = 0.8, 
+    width = 0.8,
     alpha = 0.7,
     scale = "width",
     trim = TRUE
   ) +
-  # 箱线图展示统计量
   geom_boxplot(
     width = 0.15,
     fill = "white",
     outlier.shape = NA
   ) +
-  # 使用指定配色方案
   scale_fill_manual(
-    values = c('#df5734','#64a776'),
+    values = c(
+      "Nano-Tn5" = "#df5734",
+      "Nano-Tn5-Beads" = "#64a776"
+    ),
     labels = c(
       "ctrl_H3K4me3_Nano_Tn5",
       "ctrl_H3K4me3_Nano_Tn5_Beads"
     )
   ) +
-  # 美化主题
+  geom_hline(
+    yintercept = c(3.5, 4.5, 5.5),
+    linetype = "dashed",
+    color = "gray50",
+    alpha = 0.5
+  ) +
   labs(
     title = "Unique Fragments (Rice)",
     x = NULL,
-    y = expression("Unique Fragments per cell (log"["10"]*")"),
+    y = expression("Unique Fragments per cell (log"[10]*")"),
     fill = "Sample Group"
   ) +
   theme_classic() +
@@ -83,21 +92,16 @@ plot <- ggplot(plot_long, aes(x = Sample, y = log10_uniqueFrags , fill = factor(
     axis.ticks.x = element_blank(),
     legend.position = "right",
     plot.title = element_text(hjust = 0.5, face = "bold")
-  ) +
-  # 添加水平参考线
-  geom_hline(
-    yintercept = c(3.5, 4.5, 5.5), 
-    linetype = "dashed", 
-    color = "gray50",
-    alpha = 0.5
   )
-plot
+
+# Step 6. Save the figure
 ggsave(
-  filename = "rice_broad_Unique_Fragments_violin_plot.pdf",
-  plot = plot,
+  filename = file.path(output_dir, "rice_broad_Unique_Fragments_violin_plot.pdf"),
+  plot = p,
   device = "pdf",
-  width = 10,        # 宽度（英寸）
-  height = 6,        # 高度（英寸）
-  units = "in",      # 尺寸单位
-  dpi = 1200          # 分辨率
+  width = 10,
+  height = 6,
+  units = "in"
 )
+
+print(p)
