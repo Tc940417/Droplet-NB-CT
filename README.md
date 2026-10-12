@@ -30,7 +30,106 @@ Droplet-NB-CT/
 ├── README.md
 └── LICENSE
 ```
+# Software Versions
 
+This document lists the software and package versions used for the computational analyses associated with the **Droplet NB-CT** project.
+
+## 1. R Environment
+
+| Software | Version |
+|---|---|
+| R | 4.4.2 (2024-10-31 ucrt) |
+
+### Single-cell and Epigenomic Analysis
+
+| R Package | Version |
+|---|---|
+| Seurat | 5.5.0 |
+| SeuratObject | 5.4.0 |
+| Signac | 1.17.1 |
+| SCP | 0.5.6 |
+| MAST | 1.32.0 |
+| DESeq2 | 1.46.0 |
+| chromVAR | 1.28.0 |
+| cicero | 1.3.9 |
+| monocle3 | 1.4.26 |
+
+### Genomic and Motif Analysis
+
+| R Package | Version |
+|---|---|
+| GenomicRanges | 1.58.0 |
+| GenomeInfoDb | 1.42.1 |
+| IRanges | 2.40.1 |
+| rtracklayer | 1.66.0 |
+| ChIPpeakAnno | 3.40.0 |
+| Biostrings | 2.74.1 |
+| BSgenome | 1.74.0 |
+| BSgenome.Oryza.sativa.Ensembl.Plants.Osativa.IRGSP | 1.0.0 |
+| universalmotif | 1.24.2 |
+| TFBSTools | 1.44.0 |
+| JASPAR2026 | Not detected |
+| RSQLite | 3.53.1 |
+
+### Functional Enrichment
+
+| R Package | Version |
+|---|---|
+| clusterProfiler | 4.14.6 |
+| org.Osativa.eg.db | 1.0.0 |
+| enrichplot | 1.26.6 |
+
+### Data Processing
+
+| R Package | Version |
+|---|---|
+| dplyr | 1.2.1 |
+| tidyr | 1.3.2 |
+| tibble | 3.3.1 |
+| tidyverse | 2.0.0 |
+| reshape2 | 1.4.5 |
+| data.table | 1.18.4 |
+| Matrix | 1.7-1 |
+| purrr | 1.2.2 |
+| readxl | 1.5.0 |
+| openxlsx | 4.2.8.1 |
+| HGNChelper | 0.8.15 |
+| BiocParallel | 1.40.0 |
+| igraph | 2.3.2 |
+
+### Data Visualization
+
+| R Package | Version |
+|---|---|
+| ggplot2 | 4.0.3 |
+| ggrepel | 0.9.8 |
+| patchwork | 1.3.2 |
+| pheatmap | 1.0.13 |
+| ComplexHeatmap | 2.22.0 |
+| circlize | 0.4.18 |
+| ggalluvial | 0.12.6 |
+| gtable | 0.3.6 |
+
+## 2. Python and Command-Line Software
+
+| Software | Version | Application |
+|---|---|---|
+| scGLUE | 0.2.3 | Single-cell multi-omics integration |
+| deepTools | 3.5.6 | Genomic signal processing and visualization |
+| MACS3 | 3.0.2 | Histone modification peak calling |
+| Conda | 24.11.3 | Software environment management |
+
+## 3. Reproducibility Notes
+
+The listed versions were obtained from the computational environments used for the Droplet NB-CT analyses. R package versions and Conda-managed software versions may originate from different operating systems or environments.
+
+`JASPAR2026` was not detected in the reported R environment and may need to be installed separately to reproduce analyses that depend on it.
+
+For full reproducibility, users should refer to the analysis scripts and ensure that the appropriate software dependencies, reference genomes, and annotation files are available.
+
+## 4. Related Repository
+
+[Droplet NB-CT GitHub Repository](https://github.com/Tc940417/Droplet-NB-CT)
 ## Analysis Workflow
 
 ### 1. Sequencing Data Processing
