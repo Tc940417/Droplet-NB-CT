@@ -1,70 +1,60 @@
-ctrl_H3K4me3_Nano_Tn5_rep1 <- snCT_5
-ctrl_H3K4me3_Nano_Tn5_rep2 <- snCT_6
-ctrl_H3K4me3_Nano_Tn5_Beads_rep1 <- snCT_7
-ctrl_H3K4me3_Nano_Tn5_Beads_rep2 <- snCT_8
-ctrl_H3K27ac_Nano_Tn5_Beads_rep1 <- snCT_13
-ctrl_H3K27ac_Nano_Tn5_Beads_rep2 <- snCT_14
-heat_H3K4me3_Nano_Tn5_Beads_rep1 <- snCT_15
-heat_H3K4me3_Nano_Tn5_Beads_rep2 <- snCT_16
-heat_H3K27ac_Nano_Tn5_Beads_rep1 <- snCT_17
-heat_H3K27ac_Nano_Tn5_Beads_rep2 <- snCT_18
 
+# ============================================================
+# FRiP Distribution Analysis
+# Comparison of Nano-Tn5 and Nano-Tn5-Beads in Rice
+# ============================================================
 
+# Step 1. Load required libraries
+library(Seurat)
+library(dplyr)
+library(ggplot2)
 
+# Step 2. Read Seurat objects
+data_dir <- "data"
+output_dir <- "results"
 
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
-seurat_list <- list(sample1_rep1 = ctrl_H3K4me3_Nano_Tn5_rep1,sample1_rep2 = ctrl_H3K4me3_Nano_Tn5_rep2,
-                    sample2_rep1 = ctrl_H3K4me3_Nano_Tn5_Beads_rep1,sample2_rep2 = ctrl_H3K4me3_Nano_Tn5_Beads_rep2),
-                    sample3_rep1 = ctrl_H3K27ac_Nano_Tn5_Beads_rep1,sample3_rep2 = ctrl_H3K27ac_Nano_Tn5_Beads_rep2,
-                    sample4_rep1 = heat_H3K4me3_Nano_Tn5_Beads_rep1,sample4_rep2 = heat_H3K4me3_Nano_Tn5_Beads_rep2,
-                    sample5_rep1 = heat_H3K27ac_Nano_Tn5_Beads_rep1,sample5_rep2 = heat_H3K27ac_Nano_Tn5_Beads_rep2)
-
-##FRiP##
-FRiP_df <- imap_dfr(seurat_list, ~{
-  data.frame(
-    cell_id = colnames(.x),
-    FRiP = .x$FRiP,
-    sample = .y,
-    stringsAsFactors = FALSE
-  )
-}) %>% 
-  tidyr::pivot_wider(
-    names_from = sample,
-    values_from = FRiP
-  )
-
-
-frip_df_1 <- FRiP_df[,-1]
-
-colnames(frip_df_1) <- c("ctrl_H3K4me3_Nano_Tn5_rep1", "ctrl_H3K4me3_Nano_Tn5_rep2", 
-                         "ctrl_H3K4me3_Nano_Tn5_Beads_rep1","ctrl_H3K4me3_Nano_Tn5_Beads_rep2"), 
-#                         "ctrl_H3K27ac_Nano_Tn5_Beads_rep1", "ctrl_H3K27ac_Nano_Tn5_Beads_rep2", 
-#                         "heat_H3K4me3_Nano_Tn5_Beads_rep1", "heat_H3K4me3_Nano_Tn5_Beads_rep2", 
-#                         "heat_H3K27ac_Nano_Tn5_Beads_rep1", "heat_H3K27ac_Nano_Tn5_Beads_rep2" 
-#)
-
-sample_colors <- c(
-  rep('#df5734', 2),  # 第1-2列
-  rep('#64a776', 2)),  # 第3-4列
-  rep('#2d3462', 2),  # 第5-6列
-  rep('#ebb1a4', 2),  # 第7-8列
-  rep('#76a2be', 2)   # 第9-10列
+seurat_list <- list(
+  ctrl_H3K4me3_Nano_Tn5_rep1 = readRDS(file.path(data_dir, "snCT_5.rds")),
+  ctrl_H3K4me3_Nano_Tn5_rep2 = readRDS(file.path(data_dir, "snCT_6.rds")),
+  ctrl_H3K4me3_Nano_Tn5_Beads_rep1 = readRDS(file.path(data_dir, "snCT_7.rds")),
+  ctrl_H3K4me3_Nano_Tn5_Beads_rep2 = readRDS(file.path(data_dir, "snCT_8.rds"))
 )
 
-frip_long <- frip_df_1 %>%
-  pivot_longer(
-    cols = everything(),
-    names_to = "Sample",
-    values_to = "FRiP"
-  ) %>%
-  mutate(
-    Sample = factor(Sample, levels = colnames(frip_df_1)), # 保持原始列顺序
-    Group = rep(1:2, each = 2)[as.numeric(Sample)] # 创建分组变量用于颜色映射
+# Step 3. Extract FRiP scores
+frip_df <- bind_rows(lapply(names(seurat_list), function(sample) {
+  data.frame(
+    Sample = sample,
+    FRiP = seurat_list[[sample]]$FRiP
   )
+}))
 
-plot <- ggplot(frip_long, aes(x = Sample, y = FRiP, fill = factor(Group))) +
+# Remove missing values
+frip_df <- frip_df %>%
+  filter(!is.na(FRiP))
+
+# Step 4. Define sample groups and plotting order
+frip_df$Sample <- factor(
+  frip_df$Sample,
+  levels = names(seurat_list)
+)
+
+frip_df$Group <- ifelse(
+  grepl("Beads", frip_df$Sample),
+  "Nano-Tn5-Beads",
+  "Nano-Tn5"
+)
+
+frip_df$Group <- factor(
+  frip_df$Group,
+  levels = c("Nano-Tn5", "Nano-Tn5-Beads")
+)
+
+# Step 5. Plot FRiP distributions
+p <- ggplot(frip_df, aes(x = Sample, y = FRiP, fill = Group)) +
   geom_violin(
-    width = 0.8, 
+    width = 0.8,
     alpha = 0.7,
     scale = "width",
     trim = TRUE
@@ -75,15 +65,20 @@ plot <- ggplot(frip_long, aes(x = Sample, y = FRiP, fill = factor(Group))) +
     outlier.shape = NA
   ) +
   scale_fill_manual(
-    values = c('#df5734','#64a776',
-               '#2d3462','#ebb1a4','#76a2be'),
+    values = c(
+      "Nano-Tn5" = "#df5734",
+      "Nano-Tn5-Beads" = "#64a776"
+    ),
     labels = c(
       "ctrl_H3K4me3_Nano_Tn5",
-      "ctrl_H3K4me3_Nano_Tn5_Beads",
-      "ctrl_H3K27ac_Nano_Tn5_Beads",
-      "heat_H3K4me3_Nano_Tn5_Beads",
-      "heat_H3K27ac_Nano_Tn5_Beads"
+      "ctrl_H3K4me3_Nano_Tn5_Beads"
     )
+  ) +
+  geom_hline(
+    yintercept = c(0.3, 0.6, 0.9),
+    linetype = "dashed",
+    color = "gray50",
+    alpha = 0.5
   ) +
   labs(
     title = "FRiP Distribution (Rice)",
@@ -97,21 +92,16 @@ plot <- ggplot(frip_long, aes(x = Sample, y = FRiP, fill = factor(Group))) +
     axis.ticks.x = element_blank(),
     legend.position = "right",
     plot.title = element_text(hjust = 0.5, face = "bold")
-  ) +
-  geom_hline(
-    yintercept = c(0.3, 0.6, 0.9), 
-    linetype = "dashed", 
-    color = "gray50",
-    alpha = 0.5
   )
-plot
 
+# Step 6. Save the figure
 ggsave(
-  filename = "rice_broad_FRiP_violin_plot.pdf",
-  plot = plot,
+  filename = file.path(output_dir, "rice_broad_FRiP_violin_plot.pdf"),
+  plot = p,
   device = "pdf",
-  width = 10,        # 宽度（英寸）
-  height = 6,        # 高度（英寸）
-  units = "in",      # 尺寸单位
-  dpi = 300          # 分辨率
+  width = 10,
+  height = 6,
+  units = "in"
 )
+
+print(p)
