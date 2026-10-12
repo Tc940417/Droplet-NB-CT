@@ -1,151 +1,167 @@
-library(ggplot2)
-library(tidyverse)
-library(reshape2)
+
+# ============================================================
+# Differential Gene Expression Analysis in Rice
+# MAST: Heat vs. Control Across Six Cell Types
+# ============================================================
+
+# Step 1. Load required libraries
 library(Seurat)
-library(tidyr)
-library(dplyr)
-library(SCP)
-library(BiocParallel)
-library(ggplot2)
-library(gtable)
-library(Seurat)
-nip <- readRDS("D:/sn-CUT&TAG-BGI_result/1_scRNA/1_scRNA/nip.gene_500-5000.resolution_0.25_anno_unknown.rds")
-nip$label<- paste(nip$cell_type, nip$group, sep = "-")
-nip <- JoinLayers(nip)
-Idents(nip) <- nip@meta.data$label
+library(MAST)
 
-Me_degs <- FindMarkers(nip, 
-                       ident.1 = "Mesophyll-case", 
-                       ident.2 = "Mesophyll-ctrl", 
-                       test.use="MAST", 
-                       min.pct= 0.1, 
-                       logfc.threshold= 0.25,
-                       latent.vars = "nCount_RNA",
-                       slot = "data")
-Lp_degs <- FindMarkers(nip, 
-                       ident.1 = "Large parenchyma-case", 
-                       ident.2 = "Large parenchyma-ctrl", 
-                       test.use="MAST", 
-                       min.pct= 0.1, 
-                       logfc.threshold= 0.25,
-                       latent.vars = "nCount_RNA",
-                       slot = "data")
-Ep_degs <- FindMarkers(nip, 
-                       ident.1 = "Epidermis-case", 
-                       ident.2 = "Epidermis-ctrl", 
-                       test.use="MAST", 
-                       min.pct= 0.1, 
-                       logfc.threshold= 0.25,
-                       latent.vars = "nCount_RNA",
-                       slot = "data")
-Vs_degs <- FindMarkers(nip, 
-                       ident.1 = "Vascular-case", 
-                       ident.2 = "Vascular-ctrl", 
-                       test.use="MAST", 
-                       min.pct= 0.1, 
-                       logfc.threshold= 0.25,
-                       latent.vars = "nCount_RNA",
-                       slot = "data")
-Gc_degs <- FindMarkers(nip, 
-                       ident.1 = "Guard cell-case", 
-                       ident.2 = "Guard cell-ctrl", 
-                       test.use="MAST", 
-                       min.pct= 0.1, 
-                       logfc.threshold= 0.25,
-                       latent.vars = "nCount_RNA",
-                       slot = "data")
-Fb_degs <- FindMarkers(nip, 
-                       ident.1 = "Fiber-case", 
-                       ident.2 = "Fiber-ctrl", 
-                       test.use="MAST", 
-                       min.pct= 0.1, 
-                       logfc.threshold= 0.25,
-                       latent.vars = "nCount_RNA",
-                       slot = "data")
+# Step 2. Set input and output directories
+data_dir <- "data"
+output_dir <- "results/rice_snRNA_DEG"
+split_dir <- file.path(output_dir, "DEGs_split")
 
-write.csv(Me_degs,
-          file = "Mesophyll_case_vs_ctrl.csv")
-write.csv(Lp_degs,
-          file = "LargeParenchyma_case_vs_ctrl.csv")
-write.csv(Ep_degs,
-          file = "Epidermis_case_vs_ctrl.csv")
-write.csv(Vs_degs,
-          file = "Vascular_case_vs_ctrl.csv")
-write.csv(Gc_degs,
-          file = "GuardCell_case_vs_ctrl.csv")
-write.csv(Fb_degs,
-          file = "Fiber_case_vs_ctrl.csv")
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+dir.create(split_dir, showWarnings = FALSE, recursive = TRUE)
 
-Me_degs.sig <- Me_degs[Me_degs$p_val_adj < 0.05, ]
-Lp_degs.sig <- Lp_degs[Lp_degs$p_val_adj < 0.05, ]
-Ep_degs.sig <- Ep_degs[Ep_degs$p_val_adj < 0.05, ]
-Vs_degs.sig <- Vs_degs[Vs_degs$p_val_adj < 0.05, ]
-Gc_degs.sig <- Gc_degs[Gc_degs$p_val_adj < 0.05, ]
-Fb_degs.sig <- Fb_degs[Fb_degs$p_val_adj < 0.05, ]
-
-deg.list <- list(
-  Mesophyll       = Me_degs,
-  LargeParenchyma = Lp_degs,
-  Epidermis       = Ep_degs,
-  Vascular        = Vs_degs,
-  GuardCell       = Gc_degs,
-  Fiber           = Fb_degs
+# Step 3. Read annotated scRNA-seq Seurat object
+nip <- readRDS(
+  file.path(data_dir, "nip_annotated.rds")
 )
-log2FC <- 1
 
-deg.split <- lapply(deg.list, function(df) {
+# Step 4. Prepare RNA assay for differential analysis
+DefaultAssay(nip) <- "RNA"
+nip <- JoinLayers(nip, assay = "RNA")
+
+# Define cell type and treatment identities
+nip$label <- paste(
+  nip$cell_type,
+  nip$group,
+  sep = "-"
+)
+
+Idents(nip) <- "label"
+
+# Step 5. Define cell types
+cell_types <- c(
+  Mesophyll = "Mesophyll",
+  LargeParenchyma = "Large parenchyma",
+  Epidermis = "Epidermis",
+  Vascular = "Vascular",
+  GuardCell = "Guard cell",
+  Fiber = "Fiber"
+)
+
+# ============================================================
+# Part 1. Differential Gene Expression Analysis
+# ============================================================
+
+# Step 6. Perform MAST analysis for each cell type
+deg_list <- lapply(names(cell_types), function(ct) {
+
+  cell_type <- cell_types[[ct]]
+
+  case_group <- paste0(cell_type, "-case")
+  ctrl_group <- paste0(cell_type, "-ctrl")
+
+  # Check whether both groups exist
+  if (!all(c(case_group, ctrl_group) %in% levels(Idents(nip)))) {
+    stop(paste("Missing cell groups:", case_group, ctrl_group))
+  }
+
+  # Identify differentially expressed genes
+  deg <- FindMarkers(
+    object = nip,
+    ident.1 = case_group,
+    ident.2 = ctrl_group,
+    assay = "RNA",
+    test.use = "MAST",
+    min.pct = 0.1,
+    logfc.threshold = 0.25,
+    latent.vars = "nCount_RNA",
+    slot = "data",
+    only.pos = FALSE
+  )
+
+  # Save complete DEG results
+  write.csv(
+    deg,
+    file = file.path(
+      output_dir,
+      paste0(ct, "_case_vs_ctrl.csv")
+    ),
+    row.names = TRUE
+  )
+
+  return(deg)
+})
+
+names(deg_list) <- names(cell_types)
+
+# ============================================================
+# Part 2. Classify Upregulated and Downregulated Genes
+# ============================================================
+
+# Step 7. Define DEG filtering thresholds
+padj_cutoff <- 0.05
+log2FC_cutoff <- 1
+
+# Step 8. Classify DEGs
+deg_split <- lapply(deg_list, function(df) {
+
+  significant <- is.finite(df$p_val_adj) &
+    is.finite(df$avg_log2FC) &
+    df$p_val_adj < padj_cutoff
+
+  up <- significant & df$avg_log2FC >= log2FC_cutoff
+  down <- significant & df$avg_log2FC <= -log2FC_cutoff
+
   list(
-    up = df[df$p_val_adj < 0.05 & df$avg_log2FC >=  log2FC, ],
-    down = df[df$p_val_adj < 0.05 & df$avg_log2FC <= -log2FC, ],
-    ns = df[!(df$p_val_adj < 0.05 & abs(df$avg_log2FC) >= log2FC), ]
-  )
-})
-sapply(deg.split, function(x) {
-  c(
-    up   = nrow(x$up),
-    down = nrow(x$down),
-    ns   = nrow(x$ns)
+    up = df[up, , drop = FALSE],
+    down = df[down, , drop = FALSE],
+    ns = df[!(up | down), , drop = FALSE]
   )
 })
 
-out.dir <- "E:/sn_CT/table/rice_snRNA_DEG/DEGs_split"
+# Step 9. Save classified DEGs for each cell type
+for (ct in names(deg_split)) {
 
-for (ct in names(deg.split)) {
-  ct.dir <- file.path(out.dir, ct)
-  dir.create(ct.dir, showWarnings = FALSE)
-  
-  write.csv(deg.split[[ct]]$up,
-            file = file.path(ct.dir, "up.csv"),
-            row.names = TRUE)
-  
-  write.csv(deg.split[[ct]]$down,
-            file = file.path(ct.dir, "down.csv"),
-            row.names = TRUE)
-  
-  write.csv(deg.split[[ct]]$ns,
-            file = file.path(ct.dir, "ns.csv"),
-            row.names = TRUE)
+  ct_dir <- file.path(split_dir, ct)
+
+  dir.create(
+    ct_dir,
+    showWarnings = FALSE,
+    recursive = TRUE
+  )
+
+  for (category in c("up", "down", "ns")) {
+
+    write.csv(
+      deg_split[[ct]][[category]],
+      file = file.path(ct_dir, paste0(category, ".csv")),
+      row.names = TRUE
+    )
+  }
 }
 
+# ============================================================
+# Part 3. Summarize Differential Gene Expression
+# ============================================================
 
+# Step 10. Count DEGs for each cell type
+deg_summary <- data.frame(
+  cell_type = names(deg_split),
+  n_tested = sapply(deg_list, nrow),
+  up = sapply(deg_split, function(x) nrow(x$up)),
+  down = sapply(deg_split, function(x) nrow(x$down)),
+  ns = sapply(deg_split, function(x) nrow(x$ns)),
+  row.names = NULL
+)
 
+# Step 11. Save DEG summary
+write.csv(
+  deg_summary,
+  file = file.path(output_dir, "Rice_DEG_summary.csv"),
+  row.names = FALSE
+)
 
+# Step 12. Save complete DEG results as an RDS file
+saveRDS(
+  deg_list,
+  file = file.path(output_dir, "Rice_DEG_results_MAST.rds")
+)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Step 13. Display summary
+print(deg_summary)
